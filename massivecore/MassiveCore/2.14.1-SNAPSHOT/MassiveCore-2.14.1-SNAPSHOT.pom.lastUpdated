@@ -1,0 +1,26 @@
+#NOTE: This is an Aether internal implementation file, its format can be changed without prior notice.
+#Wed May 08 14:31:10 IDT 2019
+http\://repo.citizensnpcs.co/.error=
+https\://oss.sonatype.org/content/repositories/snapshots/.error=
+http\://repo.mikeprimm.com/.error=
+https\://papermc.io/repo/repository/maven-public/.error=
+http\://nexus.hc.to/content/repositories/pub_releases/.error=
+https\://ci.zeusmainframe.ml/job/modern-lwc/job/main/ws/.error=
+http\://repo.md-5.net/content/groups/public/.error=
+http\://repo.howaner.de/.error=
+http\://maven.elmakers.com/repository/.lastUpdated=1557315065907
+http\://nexus.hc.to/content/repositories/pub_releases/.lastUpdated=1557315066587
+https\://ci.zeusmainframe.ml/job/modern-lwc/job/main/ws/.lastUpdated=1557315070568
+https\://hub.spigotmc.org/nexus/content/groups/public/.error=
+http\://maven.elmakers.com/repository/.error=
+https\://oss.sonatype.org/content/repositories/snapshots/.lastUpdated=1557315065413
+http\://repo.howaner.de/.lastUpdated=1557315070069
+http\://repo.md-5.net/content/groups/public/.lastUpdated=1557315066268
+http\://repo.dmulloy2.net/nexus/repository/public/.error=
+http\://repo.mikeprimm.com/.lastUpdated=1557315067770
+http\://repo.citizensnpcs.co/.lastUpdated=1557315069926
+http\://maven.sk89q.com/repo/.lastUpdated=1557315066975
+https\://papermc.io/repo/repository/maven-public/.lastUpdated=1557315064751
+https\://hub.spigotmc.org/nexus/content/groups/public/.lastUpdated=1557315064214
+http\://maven.sk89q.com/repo/.error=
+http\://repo.dmulloy2.net/nexus/repository/public/.lastUpdated=1557315067290
