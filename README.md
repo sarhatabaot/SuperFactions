@@ -1,3 +1,4 @@
+[![](https://jitpack.io/v/sarhatabaot/SuperFactions.svg)](https://jitpack.io/#sarhatabaot/SuperFactions)
 # SuperFactions
 The whole factions project, for build via jitpack.
 
