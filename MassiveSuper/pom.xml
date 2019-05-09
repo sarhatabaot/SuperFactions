@@ -288,14 +288,6 @@
                     <configuration>
                         <proguardVersion>${massiveMavenProGuardVersion}</proguardVersion>
                         <proguardInclude>${basedir}/proguard.conf</proguardInclude>
-                        <dependencies>
-                            <dependency>
-                                <groupId>net.sf.proguard</groupId>
-                                <artifactId>proguard-base</artifactId>
-                                <version>${massiveMavenProGuardVersion}</version>
-                                <scope>runtime</scope>
-                            </dependency>
-                        </dependencies>
                     </configuration>
                 </plugin>
             </plugins>
@@ -312,6 +304,12 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${massiveGuavaVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sf.proguard</groupId>
+                <artifactId>proguard-base</artifactId>
+                <version>${massiveMavenProGuardVersion}</version>
+                <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.code.gson</groupId>
