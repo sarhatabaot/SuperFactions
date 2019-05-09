@@ -1,11 +1,14 @@
 package com.massivecraft.massivecore;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.massivecraft.massivecore.adapter.AdapterBackstringSet;
-import com.massivecraft.massivecore.adapter.AdapterBannerPatterns;
-import com.massivecraft.massivecore.adapter.AdapterEntry;
 import com.massivecraft.massivecore.adapter.AdapterEntityInternalMap;
-import com.massivecraft.massivecore.adapter.AdapterInventory;
-import com.massivecraft.massivecore.adapter.AdapterItemStack;
+import com.massivecraft.massivecore.adapter.AdapterEntry;
 import com.massivecraft.massivecore.adapter.AdapterJsonElement;
 import com.massivecraft.massivecore.adapter.AdapterMassiveList;
 import com.massivecraft.massivecore.adapter.AdapterMassiveMap;
@@ -15,9 +18,14 @@ import com.massivecraft.massivecore.adapter.AdapterMassiveTreeSet;
 import com.massivecraft.massivecore.adapter.AdapterModdedEnumType;
 import com.massivecraft.massivecore.adapter.AdapterMson;
 import com.massivecraft.massivecore.adapter.AdapterMsonEvent;
-import com.massivecraft.massivecore.adapter.AdapterPlayerInventory;
 import com.massivecraft.massivecore.adapter.AdapterSound;
 import com.massivecraft.massivecore.adapter.AdapterUUID;
+import com.massivecraft.massivecore.cmd.CmdMassiveCore;
+import com.massivecraft.massivecore.cmd.CmdMassiveCoreBuffer;
+import com.massivecraft.massivecore.cmd.CmdMassiveCoreClick;
+import com.massivecraft.massivecore.cmd.CmdMassiveCoreCmdurl;
+import com.massivecraft.massivecore.cmd.CmdMassiveCoreStore;
+import com.massivecraft.massivecore.cmd.CmdMassiveCoreUsys;
 import com.massivecraft.massivecore.collections.BackstringSet;
 import com.massivecraft.massivecore.collections.MassiveList;
 import com.massivecraft.massivecore.collections.MassiveListDef;
@@ -30,21 +38,61 @@ import com.massivecraft.massivecore.collections.MassiveTreeMapDef;
 import com.massivecraft.massivecore.collections.MassiveTreeSet;
 import com.massivecraft.massivecore.collections.MassiveTreeSetDef;
 import com.massivecraft.massivecore.command.type.RegistryType;
-import com.massivecraft.massivecore.item.DataBannerPattern;
-import com.massivecraft.massivecore.item.DataItemStack;
-import com.massivecraft.massivecore.item.WriterItemStack;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreChestGui;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreClean;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreCollTick;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreCommandRegistration;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreCommandSet;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreDatabase;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreDestination;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreGank;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreLorePriority;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreMain;
+import com.massivecraft.massivecore.engine.EngineMassiveCorePlayerLeave;
+import com.massivecraft.massivecore.engine.EngineMassiveCorePlayerState;
+import com.massivecraft.massivecore.engine.EngineMassiveCorePlayerUpdate;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreScheduledTeleport;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreTeleportMixinCause;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreVariable;
+import com.massivecraft.massivecore.engine.EngineMassiveCoreWorldNameSet;
+import com.massivecraft.massivecore.entity.MassiveCoreMConf;
+import com.massivecraft.massivecore.entity.MassiveCoreMConfColl;
+import com.massivecraft.massivecore.entity.MultiverseColl;
+import com.massivecraft.massivecore.entity.migrator.MigratorMassiveCoreMConf001CleanInactivity;
+import com.massivecraft.massivecore.integration.vault.IntegrationVault;
+import com.massivecraft.massivecore.mixin.MixinActionbar;
+import com.massivecraft.massivecore.mixin.MixinActual;
+import com.massivecraft.massivecore.mixin.MixinCommand;
+import com.massivecraft.massivecore.mixin.MixinDisplayName;
 import com.massivecraft.massivecore.mixin.MixinEvent;
+import com.massivecraft.massivecore.mixin.MixinGamemode;
+import com.massivecraft.massivecore.mixin.MixinKick;
+import com.massivecraft.massivecore.mixin.MixinLog;
+import com.massivecraft.massivecore.mixin.MixinMessage;
+import com.massivecraft.massivecore.mixin.MixinModification;
+import com.massivecraft.massivecore.mixin.MixinPlayed;
+import com.massivecraft.massivecore.mixin.MixinRecipe;
+import com.massivecraft.massivecore.mixin.MixinSenderPs;
+import com.massivecraft.massivecore.mixin.MixinTeleport;
+import com.massivecraft.massivecore.mixin.MixinTitle;
+import com.massivecraft.massivecore.mixin.MixinVisibility;
+import com.massivecraft.massivecore.mixin.MixinWorld;
 import com.massivecraft.massivecore.mson.Mson;
 import com.massivecraft.massivecore.mson.MsonEvent;
 import com.massivecraft.massivecore.nms.NmsBasics;
-import com.massivecraft.massivecore.nms.NmsItemStackCreate17R4P;
+import com.massivecraft.massivecore.nms.NmsBoard;
+import com.massivecraft.massivecore.nms.NmsChat;
+import com.massivecraft.massivecore.nms.NmsEntityDamageEvent;
+import com.massivecraft.massivecore.nms.NmsEntityGet;
+import com.massivecraft.massivecore.nms.NmsItemStackTooltip;
+import com.massivecraft.massivecore.nms.NmsPermissions;
+import com.massivecraft.massivecore.nms.NmsRecipe;
+import com.massivecraft.massivecore.nms.NmsSkullMeta;
 import com.massivecraft.massivecore.ps.PS;
 import com.massivecraft.massivecore.ps.PSAdapter;
-import com.massivecraft.massivecore.store.Coll;
 import com.massivecraft.massivecore.store.EntityInternalMap;
 import com.massivecraft.massivecore.store.ModificationPollerLocal;
 import com.massivecraft.massivecore.store.ModificationPollerRemote;
-import com.massivecraft.massivecore.store.migrator.MigratorUtil;
 import com.massivecraft.massivecore.util.BoardUtil;
 import com.massivecraft.massivecore.util.ContainerUtil;
 import com.massivecraft.massivecore.util.EventUtil;
@@ -61,21 +109,10 @@ import com.massivecraft.massivecore.util.SmokeUtil;
 import com.massivecraft.massivecore.util.TimeDiffUtil;
 import com.massivecraft.massivecore.util.TimeUnit;
 import com.massivecraft.massivecore.util.Txt;
-import com.massivecraft.massivecore.xlib.gson.Gson;
-import com.massivecraft.massivecore.xlib.gson.GsonBuilder;
-import com.massivecraft.massivecore.xlib.gson.JsonArray;
-import com.massivecraft.massivecore.xlib.gson.JsonNull;
-import com.massivecraft.massivecore.xlib.gson.JsonObject;
-import com.massivecraft.massivecore.xlib.gson.JsonPrimitive;
-import com.massivecraft.massivecore.xlib.gson.reflect.TypeToken;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -156,20 +193,6 @@ public class MassiveCore extends MassivePlugin
 		ret.registerTypeAdapter(Mson.class, AdapterMson.get());
 		ret.registerTypeAdapter(MsonEvent.class, AdapterMsonEvent.get());
 		
-		// Banner Patterns Upgrade Adapter
-		// NOTE: Must come after the "MassiveContainers" section for priority.
-		Type typeBannerPatterns = new TypeToken<MassiveListDef<DataBannerPattern>>(){}.getType();
-		ret.registerTypeAdapter(typeBannerPatterns, AdapterBannerPatterns.get());
-		
-		// ItemStack
-		ret.registerTypeAdapter(ItemStack.class, AdapterItemStack.get());
-		Class<?> classCraftItemStack = NmsItemStackCreate17R4P.getClassCraftItemStackCatch();
-		if (classCraftItemStack != null) ret.registerTypeAdapter(classCraftItemStack, AdapterItemStack.get());
-		
-		// Inventory
-		ret.registerTypeAdapter(Inventory.class, AdapterInventory.get());
-		ret.registerTypeAdapter(PlayerInventory.class, AdapterPlayerInventory.get());
-		
 		// Storage
 		ret.registerTypeAdapter(EntityInternalMap.class, AdapterEntityInternalMap.get());
 		
@@ -233,18 +256,11 @@ public class MassiveCore extends MassivePlugin
 		// Setup RegistryType
 		RegistryType.registerAll();
 		
-		MigratorUtil.addJsonRepresentation(ItemStack.class, DataItemStack.class);
-		MigratorUtil.addJsonRepresentation(Inventory.class, null);
-		MigratorUtil.setTargetVersion(Inventory.class, MigratorUtil.getTargetVersion(DataItemStack.class));
-		
 		// Activate
 		this.activateAuto();
 
 		// These must be activated after nms
 		this.activate(
-
-			// Writer,
-			WriterItemStack.class,
 			
 			// Util
 			PlayerUtil.class,
@@ -261,36 +277,115 @@ public class MassiveCore extends MassivePlugin
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, MassiveCoreTaskDeleteFiles.get());
 	}
 
+	// These are overriden because the reflection trick was buggy and didn't work on all systems
+	@Override
+	public List<Class<?>> getClassesActiveMigrators()
+	{
+		return MUtil.list(
+			MigratorMassiveCoreMConf001CleanInactivity.class
+		);
+	}
+
 	@Override
 	public List<Class<?>> getClassesActiveColls()
 	{
-		List<Class<?>> ret = this.getClassesActive(null, Coll.class);
-
-		return ret;
+		return MUtil.list(
+			MassiveCoreMConfColl.class,
+			MultiverseColl.class
+		);
 	}
-	
+
 	@Override
 	public List<Class<?>> getClassesActiveNms()
 	{
-		List<Class<?>> ret = super.getClassesActiveNms();
-		
-		ret.remove(NmsBasics.class);
-		ret.add(0, NmsBasics.class);
-		
-		return ret;
+		return MUtil.list(
+			NmsBasics.class,
+			NmsBoard.class,
+			NmsChat.class,
+			NmsEntityDamageEvent.class,
+			NmsEntityGet.class,
+			NmsItemStackTooltip.class,
+			NmsPermissions.class,
+			NmsSkullMeta.class,
+			NmsRecipe.class
+		);
 	}
-	
+
+	@Override
+	public List<Class<?>> getClassesActiveCommands()
+	{
+		return MUtil.list(
+				CmdMassiveCore.class,
+				CmdMassiveCoreBuffer.class,
+				CmdMassiveCoreClick.class,
+				CmdMassiveCoreCmdurl.class,
+				CmdMassiveCoreStore.class,
+				CmdMassiveCoreUsys.class
+		);
+	}
+
+	@Override
+	public List<Class<?>> getClassesActiveEngines()
+	{
+		return MUtil.list(
+			EngineMassiveCoreChestGui.class,
+			EngineMassiveCoreClean.class,
+			EngineMassiveCoreCollTick.class,
+			EngineMassiveCoreCommandRegistration.class,
+			EngineMassiveCoreCommandSet.class,
+			EngineMassiveCoreDatabase.class,
+			EngineMassiveCoreDestination.class,
+			EngineMassiveCoreGank.class,
+			EngineMassiveCoreLorePriority.class,
+			EngineMassiveCoreMain.class,
+			EngineMassiveCorePlayerLeave.class,
+			EngineMassiveCorePlayerState.class,
+			EngineMassiveCorePlayerUpdate.class,
+			EngineMassiveCoreScheduledTeleport.class,
+			EngineMassiveCoreTeleportMixinCause.class,
+			EngineMassiveCoreVariable.class,
+			EngineMassiveCoreWorldNameSet.class
+			);
+	}
+
+	@Override
+	public List<Class<?>> getClassesActiveIntegrations()
+	{
+		return MUtil.list(
+			IntegrationVault.class
+		);
+	}
+
 	@Override
 	public List<Class<?>> getClassesActiveMixins()
 	{
-		List<Class<?>> ret = super.getClassesActiveMixins();
-
-		ret.remove(MixinEvent.class);
-		ret.add(0, MixinEvent.class);
-
-		return ret;
+		return MUtil.list(
+			MixinEvent.class,
+			MixinActionbar.class,
+			MixinActual.class,
+			MixinCommand.class,
+			MixinDisplayName.class,
+			MixinGamemode.class,
+			MixinKick.class,
+			MixinLog.class,
+			MixinMessage.class,
+			MixinModification.class,
+			MixinPlayed.class,
+			MixinRecipe.class,
+			MixinSenderPs.class,
+			MixinTeleport.class,
+			MixinTitle.class,
+			MixinVisibility.class,
+			MixinWorld.class
+			);
 	}
-	
+
+	@Override
+	public List<Class<?>> getClassesActiveTests()
+	{
+		return MUtil.list();
+	}
+
 	// -------------------------------------------- //
 	// DISABLE
 	// -------------------------------------------- //

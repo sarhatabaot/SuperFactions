@@ -54,6 +54,7 @@ public class SenderColl<E extends SenderEntity<E>> extends Coll<E> implements Se
 	@Override
 	public E get(Object oid)
 	{
+		if (oid == null) throw new NullPointerException("oid");
 		if (MUtil.isNpc(oid)) return null;
 		return super.get(oid);
 	}
@@ -61,6 +62,7 @@ public class SenderColl<E extends SenderEntity<E>> extends Coll<E> implements Se
 	@Override
 	public E get(Object oid, boolean creative)
 	{
+		if (oid == null) throw new NullPointerException("oid");
 		if (MUtil.isNpc(oid)) return null;
 		return super.get(oid, creative);
 	}
@@ -68,8 +70,7 @@ public class SenderColl<E extends SenderEntity<E>> extends Coll<E> implements Se
 	@Override
 	public String fixId(Object oid)
 	{
-		// A null oid should always return null.
-		if (oid == null) return null;
+		if (oid == null) throw new NullPointerException("oid");
 		
 		String ret = null;
 		
@@ -85,8 +86,10 @@ public class SenderColl<E extends SenderEntity<E>> extends Coll<E> implements Se
 		if (ret == null)
 		{
 			// Always lower case.
-			return IdUtil.getId(oid);
+			ret = IdUtil.getId(oid);
 		}
+
+		if (ret == null) throw new NullPointerException("Could not fix: " + oid);
 		
 		if (this.isLowercasing())
 		{

@@ -60,16 +60,15 @@ public class CmdFactionsSeeChunkOld extends FactionsCommand
 		// Inform
 		msg("<i>Visualized %s", chunk.toString(PSFormatHumanSpace.get()));
 	}
-	
-	@SuppressWarnings("deprecation")
+
 	public static void showPillar(Player player, World world, int blockX, int blockZ)
 	{
 		for (int blockY = 0; blockY < world.getMaxHeight(); blockY++)
 		{
 			Location loc = new Location(world, blockX, blockY, blockZ);
 			if (loc.getBlock().getType() != Material.AIR) continue;
-			int typeId = blockY % 5 == 0 ? Material.GLOWSTONE.getId() : Material.GLASS.getId();
-			VisualizeUtil.addLocation(player, loc, typeId);
+			Material type = blockY % 5 == 0 ? Material.GLOWSTONE : Material.GLASS;
+			VisualizeUtil.addLocation(player, loc, type);
 		}
 	}
 	

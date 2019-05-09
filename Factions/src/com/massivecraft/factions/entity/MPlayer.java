@@ -17,13 +17,10 @@ import com.massivecraft.massivecore.mixin.MixinSenderPs;
 import com.massivecraft.massivecore.mixin.MixinTitle;
 import com.massivecraft.massivecore.ps.PS;
 import com.massivecraft.massivecore.ps.PSFormatHumanSpace;
-import com.massivecraft.massivecore.store.Coll;
-import com.massivecraft.massivecore.store.Modification;
 import com.massivecraft.massivecore.store.SenderEntity;
 import com.massivecraft.massivecore.util.IdUtil;
 import com.massivecraft.massivecore.util.MUtil;
 import com.massivecraft.massivecore.util.Txt;
-import com.massivecraft.massivecore.xlib.gson.annotations.SerializedName;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -32,18 +29,16 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipator
-{
+public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipator, MPerm.MPermable {
 	// -------------------------------------------- //
 	// META
 	// -------------------------------------------- //
-	
+
 	public static final transient String NOTITLE = Txt.parse("<em><silver>no title set");
-	
+
 	// -------------------------------------------- //
 	// META
 	// -------------------------------------------- //
@@ -54,15 +49,20 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 	}
 
 	// -------------------------------------------- //
+	// VERSION
+	// -------------------------------------------- //
+
+	public int version = 2;
+
+	// -------------------------------------------- //
 	// LOAD
 	// -------------------------------------------- //
 
 	@Override
-	public MPlayer load(MPlayer that)
-	{
+	public MPlayer load(MPlayer that) {
 		this.setLastActivityMillis(that.lastActivityMillis);
 		this.setFactionId(that.factionId);
-		this.setRole(that.role);
+		this.rankId = that.rankId;
 		this.setTitle(that.title);
 		this.setPowerBoost(that.powerBoost);
 		this.setPower(that.power);
@@ -72,14 +72,13 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 
 		return this;
 	}
-	
+
 	// -------------------------------------------- //
 	// IS DEFAULT
 	// -------------------------------------------- //
 
 	@Override
-	public boolean isDefault()
-	{
+	public boolean isDefault() {
 		// Last activity millis is data we use for clearing out cleanable players. So it does not in itself make the player data worth keeping.
 		if (this.hasFaction()) return false;
 		// Role means nothing without a faction.
@@ -98,25 +97,21 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 	// -------------------------------------------- //
 
 	@Override
-	public void postAttach(String id)
-	{
+	public void postAttach(String id) {
 		FactionsIndex.get().update(this);
 	}
 
 	@Override
-	public void preDetach(String id)
-	{
+	public void preDetach(String id) {
 		FactionsIndex.get().update(this);
 	}
-	
+
 	@Override
-	public void preClean()
-	{
-		if (this.getRole() == Rel.LEADER)
-		{
+	public void preClean() {
+		if (this.getRank().isLeader()) {
 			this.getFaction().promoteNewLeader();
 		}
-		
+
 		this.leave();
 	}
 
@@ -143,7 +138,7 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 
 	// What role does the player have in the faction?
 	// Null means default.
-	private Rel role = null;
+	private String rankId = null;
 
 	// What title does the player have in the faction?
 	// The title is just for fun. It's not connected to any game mechanic.
@@ -173,12 +168,14 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 
 	// Is this player overriding?
 	// Null means false
-	@SerializedName(value = "usingAdminMode")
 	private Boolean overriding = null;
 
 	// Does this player use titles for territory info?
 	// Null means default specified in MConf.
 	private Boolean territoryInfoTitles = null;
+
+	// Is the player doing faction flying?
+	private Boolean flying = null;
 
 	// The Faction this player is currently autoclaiming for.
 	// Null means the player isn't auto claiming.
@@ -209,7 +206,7 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 	{
 		// The default neutral faction
 		this.setFactionId(null);
-		this.setRole(null);
+		this.setRank(null);
 		this.setTitle(null);
 		this.setAutoClaimFaction(null);
 	}
@@ -313,24 +310,24 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 	// FIELD: role
 	// -------------------------------------------- //
 
-	public Rel getRole()
+	public Rank getRank()
 	{
-		if (this.isFactionOrphan()) return Rel.RECRUIT;
+		if (this.isFactionOrphan()) return FactionColl.get().getNone().getLowestRank();
 		
-		if (this.role == null) return MConf.get().defaultPlayerRole;
-		return this.role;
+		if (this.rankId == null) return this.getFaction().getLowestRank();
+		return this.getFaction().getRank(this.rankId);
 	}
 
-	public void setRole(Rel role)
+	public void setRank(Rank rank)
 	{
 		// Clean input
-		Rel target = role;
+		String rankId = rank == null ? null : rank.getId();
 
 		// Detect Nochange
-		if (MUtil.equals(this.role, target)) return;
+		if (MUtil.equals(this.rankId, rankId)) return;
 
 		// Apply
-		this.role = target;
+		this.rankId = rankId;
 
 		// Mark as changed
 		this.changed();
@@ -588,6 +585,20 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 	}
 
 	// -------------------------------------------- //
+	// FIELD: fly
+	// -------------------------------------------- //
+
+	public boolean isFlying()
+	{
+		return this.convertGet(this.flying, false, Perm.FLY);
+	}
+
+	public void setFlying(Boolean flying)
+	{
+		this.flying = this.convertSet(flying, this.flying, false);
+	}
+
+	// -------------------------------------------- //
 	// TITLE, NAME, FACTION NAME AND CHAT
 	// -------------------------------------------- //
 
@@ -604,7 +615,7 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 	{
 		String ret = "";
 		ret += color;
-		ret += this.getRole().getPrefix();
+		ret += this.getRank().getPrefix();
 		if (something != null && something.length() > 0)
 		{
 			ret += something;
@@ -723,7 +734,7 @@ public class MPlayer extends SenderEntity<MPlayer> implements FactionsParticipat
 
 		if (myFaction.getMPlayers().size() > 1)
 		{
-			if (!permanent && this.getRole() == Rel.LEADER)
+			if (!permanent && this.getRank().isLeader())
 			{
 				msg("<b>You must give the leader role to someone else first.");
 				return;

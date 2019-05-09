@@ -1,5 +1,6 @@
 package com.massivecraft.massivecore.store;
 
+import com.google.common.base.Objects;
 import com.massivecraft.massivecore.Named;
 import com.massivecraft.massivecore.PlayerState;
 import com.massivecraft.massivecore.event.EventMassiveCoreAknowledge;
@@ -12,7 +13,6 @@ import com.massivecraft.massivecore.mson.Mson;
 import com.massivecraft.massivecore.store.cleanable.Cleanable;
 import com.massivecraft.massivecore.util.IdUtil;
 import com.massivecraft.massivecore.util.PermissionUtil;
-import com.massivecraft.massivecore.xlib.guava.base.Objects;
 import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -190,32 +190,32 @@ public abstract class SenderEntity<E extends SenderEntity<E>> extends Entity<E> 
 
 	public boolean isOnline()
 	{
-		return MixinPlayed.get().isOnline(this.getId());
+		return MixinPlayed.get().isOnline(this.getIdOrThrow());
 	}
 	
 	public boolean isOffline()
 	{
-		return MixinPlayed.get().isOffline(this.getId());
+		return MixinPlayed.get().isOffline(this.getIdOrThrow());
 	}
 	
 	public Long getLastPlayed()
 	{
-		return MixinPlayed.get().getLastPlayed(this.getId());
+		return MixinPlayed.get().getLastPlayed(this.getIdOrThrow());
 	}
 	
 	public Long getFirstPlayed()
 	{
-		return MixinPlayed.get().getFirstPlayed(this.getId());
+		return MixinPlayed.get().getFirstPlayed(this.getIdOrThrow());
 	}
 	
 	public boolean hasPlayedBefore()
 	{
-		return MixinPlayed.get().hasPlayedBefore(this.getId());
+		return MixinPlayed.get().hasPlayedBefore(this.getIdOrThrow());
 	}
 	
 	public String getIp()
 	{
-		return MixinPlayed.get().getIp(this.getId());
+		return MixinPlayed.get().getIp(this.getIdOrThrow());
 	}
 	
 	public boolean isVisible()

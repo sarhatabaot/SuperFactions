@@ -13,15 +13,10 @@ import com.massivecraft.massivecore.engine.EngineMassiveCoreWorldNameSet;
 import com.massivecraft.massivecore.integration.liability.IntegrationLiabilityAreaEffectCloud;
 import com.massivecraft.massivecore.mixin.MixinMessage;
 import com.massivecraft.massivecore.nms.NmsEntityGet;
-import com.massivecraft.massivecore.predicate.Predicate;
 import com.massivecraft.massivecore.predicate.PredicateElementGarbage;
 import com.massivecraft.massivecore.predicate.PredicateElementSignificant;
 import com.massivecraft.massivecore.util.extractor.Extractor;
-import com.massivecraft.massivecore.util.extractor.ExtractorPlayer;
-import com.massivecraft.massivecore.util.extractor.ExtractorPlayerName;
-import com.massivecraft.massivecore.util.extractor.ExtractorSender;
 import com.massivecraft.massivecore.util.extractor.ExtractorSenderId;
-import com.massivecraft.massivecore.util.extractor.ExtractorSenderName;
 import com.massivecraft.massivecore.util.extractor.ExtractorWorld;
 import com.massivecraft.massivecore.util.extractor.ExtractorWorldName;
 import org.bukkit.Bukkit;
@@ -57,7 +52,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.projectiles.ProjectileSource;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.InetAddress;
@@ -71,7 +65,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,103 +72,24 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 public class MUtil
 {
 	// -------------------------------------------- //
-	// CONSTANTS
-	// -------------------------------------------- //
-	
-	private static Method methodGetOnlinePlayers;
-	
-	static
-	{
-		methodGetOnlinePlayers = getMethodGetOnlinePlayers();
-	}
-
-	// -------------------------------------------- //
 	// GET ONLINE PLAYERS
 	// -------------------------------------------- //
-	// It seems we can not always trust the Bukkit.getOnlinePlayers() method.
-	// Due to compilation issue this method might not exist in the form we compiled against.
-	// Spigot 1.8 and the 1.7 Bukkit might have been compiled slightly differently resulting in this issue.
-	// Issue Example: https://github.com/MassiveCraft/MassiveCore/issues/192
-	
-	public static Method getMethodGetOnlinePlayers()
-	{
-		Method ret = null;
-		
-		try
-		{
-			for (Method method : Bukkit.class.getDeclaredMethods())
-			{
-				// The method name must be getOnlinePlayers ...
-				if ( ! method.getName().equals("getOnlinePlayers")) continue;
-				
-				// ... if we find such a method it's better than nothing ...
-				if (ret == null) ret = method;
-				
-				// ... but if the method additionally returns a collection ...
-				if ( ! method.getReturnType().isAssignableFrom(Collection.class)) continue;
-				
-				// ... that is preferable ...
-				ret = method;
-				
-				// ... and we need not look any further.
-				break;
-			}
-			
-			ret.setAccessible(true);
-		}
-		catch (Exception e)
-		{
-			// If we fail we do so silently.
-			// This method is probably almost never going to be used anyways.
-		}
-		
-		return ret;
-	}
-	
+	// Old thing that had to do with the converfrion from 1.17 to 1.8
+
+	@Deprecated
 	public static Collection<Player> getOnlinePlayers()
 	{
-		// Fetch some kind of playersObject.
-		Object playersObject = null;
-		try
-		{
-			playersObject = Bukkit.getOnlinePlayers();
-		}
-		catch (Throwable t)
-		{
-			// That didn't work!
-			// We probably just caught a NoSuchMethodError.
-			// So let's try with reflection instead.
-			try
-			{
-				playersObject = methodGetOnlinePlayers.invoke(null);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		// Now return the playersObject.
-		if (playersObject instanceof Collection<?>)
-		{
-			@SuppressWarnings("unchecked")
-			Collection<Player> playersCollection = (Collection<Player>)playersObject;
-			return playersCollection;
-		}
-		else if (playersObject instanceof Player[])
-		{
-			Player[] playersArray = (Player[])playersObject;
-			return Arrays.asList(playersArray);
-		}
-		else
-		{
-			throw new RuntimeException("Failed retrieving online players.");
-		}
+		Collection<? extends Player>coll = Bukkit.getOnlinePlayers();
+		List<Player> ret = new MassiveList<>(coll.size());
+		return ret;
 	}
 	
 	// -------------------------------------------- //
@@ -197,7 +111,7 @@ public class MUtil
 		// Fill
 		final World world = location.getWorld();
 		final double radiusSquared = radius * radius;
-		for (Player player : MUtil.getOnlinePlayers())
+		for (Player player : Bukkit.getOnlinePlayers())
 		{
 			Location playerLocation = player.getLocation();
 			World playerWorld = playerLocation.getWorld();
@@ -253,7 +167,7 @@ public class MUtil
 	public static UUID asUuid(String string)
 	{
 		// Null
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		
 		// Avoid Exception
 		if (string.length() != 36) return null;
@@ -287,7 +201,7 @@ public class MUtil
 	
 	public static boolean containsCommand(String needle, Iterable<String> haystack)
 	{
-		if (needle == null) return false;
+		if (needle == null) throw new NullPointerException("needle");
 		needle = prepareCommand(needle);
 		
 		for (String straw : haystack)
@@ -316,7 +230,7 @@ public class MUtil
 	
 	private static String prepareCommand(String string)
 	{
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		string = Txt.removeLeadingCommandDust(string);
 		string = string.toLowerCase();
 		string = string.trim();
@@ -386,6 +300,8 @@ public class MUtil
 	
 	public static boolean isNpc(Object object)
 	{
+		if (object == null) throw new NullPointerException("object");
+
 		if ( ! (object instanceof Metadatable)) return false;
 		Metadatable metadatable = (Metadatable)object;
 		try
@@ -407,6 +323,8 @@ public class MUtil
 	
 	public static boolean isSender(Object object)
 	{
+		if (object == null) throw new NullPointerException("object");
+
 		if (!(object instanceof CommandSender)) return false;
 		if (isNpc(object)) return false;
 		return true;
@@ -418,6 +336,8 @@ public class MUtil
 	
 	public static boolean isPlayer(Object object)
 	{
+		if (object == null) throw new NullPointerException("object");
+
 		if (!(object instanceof Player)) return false;
 		if (isNpc(object)) return false;
 		return true;
@@ -955,7 +875,7 @@ public class MUtil
 	
 	public static <T> T regexPickFirstVal(String input, Map<String, T> regex2val)
 	{
-		if (regex2val == null) return null;
+		if (regex2val == null) throw new NullPointerException("regex2val");
 		T ret = null;
 		
 		for (Entry<String, T> entry : regex2val.entrySet())
@@ -971,7 +891,7 @@ public class MUtil
 	
 	public static <E, T> T equalsPickFirstVal(E input, Map<E, T> thing2val)
 	{
-		if (thing2val == null) return null;
+		if (thing2val == null) throw new NullPointerException("thing2val");
 		T ret = null;
 		
 		for (Entry<E, T> entry : thing2val.entrySet())
@@ -1104,16 +1024,22 @@ public class MUtil
 		Material.BREAD,
 		Material.COOKED_BEEF,
 		Material.COOKED_CHICKEN,
-		Material.COOKED_FISH,
+		Material.COOKED_COD,
+		Material.COOKED_MUTTON,
+		Material.COOKED_PORKCHOP,
+		Material.COOKED_RABBIT,
+		Material.COOKED_SALMON,
 		Material.COOKIE,
-		Material.GRILLED_PORK,
 		Material.GOLDEN_APPLE,
 		Material.MELON,
-		Material.MUSHROOM_SOUP,
-		Material.PORK,
-		Material.RAW_BEEF,
-		Material.RAW_CHICKEN,
-		Material.RAW_FISH,
+		Material.MUSHROOM_STEW,
+		Material.PORKCHOP,
+		Material.BEEF,
+		Material.CHICKEN,
+		Material.COD,
+		Material.SALMON,
+		Material.PUFFERFISH,
+		Material.TROPICAL_FISH,
 		Material.ROTTEN_FLESH,
 		Material.SPIDER_EYE
 	));
@@ -1140,10 +1066,10 @@ public class MUtil
 	// Sword
 	
 	public static Set<Material> SWORD_MATERIALS = EnumSet.of(
-		Material.WOOD_SWORD,
+		Material.WOODEN_SWORD,
 		Material.STONE_SWORD,
 		Material.IRON_SWORD,
-		Material.GOLD_SWORD,
+		Material.GOLDEN_SWORD,
 		Material.DIAMOND_SWORD
 	);
 	
@@ -1180,10 +1106,10 @@ public class MUtil
 	// Axe
 	
 	public static Set<Material> AXE_MATERIALS = EnumSet.of(
-		Material.WOOD_AXE,
+		Material.WOODEN_AXE,
 		Material.STONE_AXE,
 		Material.IRON_AXE,
-		Material.GOLD_AXE,
+		Material.GOLDEN_AXE,
 		Material.DIAMOND_AXE
 	);
 	
@@ -1252,10 +1178,10 @@ public class MUtil
 	// Pickaxe
 	
 	public static Set<Material> PICKAXE_MATERIALS = EnumSet.of(
-		Material.WOOD_PICKAXE,
+		Material.WOODEN_PICKAXE,
 		Material.STONE_PICKAXE,
 		Material.IRON_PICKAXE,
-		Material.GOLD_PICKAXE,
+		Material.GOLDEN_PICKAXE,
 		Material.DIAMOND_PICKAXE
 	);
 		
@@ -1286,11 +1212,11 @@ public class MUtil
 	// Spade
 	
 	public static Set<Material> SPADE_MATERIALS = EnumSet.of(
-		Material.WOOD_SPADE,
-		Material.STONE_SPADE,
-		Material.IRON_SPADE,
-		Material.GOLD_SPADE,
-		Material.DIAMOND_SPADE
+		Material.WOODEN_SHOVEL,
+		Material.IRON_SHOVEL,
+		Material.IRON_SHOVEL,
+		Material.GOLDEN_SHOVEL,
+		Material.DIAMOND_SHOVEL
 	);
 			
 	public static boolean isSpade(Material material)
@@ -1329,9 +1255,9 @@ public class MUtil
 		
 		Material ret = null;
 		
-		if (action == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == Material.CAKE_BLOCK)
+		if (action == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == Material.CAKE)
 		{
-			ret = Material.CAKE_BLOCK;
+			ret = Material.CAKE;
 		}
 		else if (FOOD_MATERIALS.contains(event.getMaterial()))
 		{
@@ -1488,7 +1414,13 @@ public class MUtil
 	// -------------------------------------------- //
 	// TRANSFORM
 	// -------------------------------------------- //
-	
+
+	@Deprecated
+	public static <T> List<T> transform(Iterable<T> items, com.massivecraft.massivecore.predicate.Predicate<? super T> where, Comparator<? super T> orderby, Integer limit, Integer offset)
+	{
+		return transform(items, (Predicate<? super T>) where, orderby, limit, offset);
+	}
+
 	public static <T> List<T> transform(Iterable<T> items, Predicate<? super T> where, Comparator<? super T> orderby, Integer limit, Integer offset)
 	{
 		// Collection
@@ -1525,7 +1457,7 @@ public class MUtil
 			
 			for (T item : items)
 			{
-				if (where.apply(item))
+				if (where.test(item))
 				{
 					ret.add(item);
 				}
@@ -1586,6 +1518,13 @@ public class MUtil
 	public static <T> List<T> transform(Iterable<T> items, Comparator<? super T> orderby, Integer limit, Integer offset) { return transform(items, null, orderby, limit, offset); }
 	public static <T> List<T> transform(Iterable<T> items, Integer limit) { return transform(items, null, null, limit, null); }
 	public static <T> List<T> transform(Iterable<T> items, Integer limit, Integer offset) { return transform(items, null, null, limit, offset); }
+
+	// OLD PREDICATE
+	@Deprecated public static <T> List<T> transform(Iterable<T> items, com.massivecraft.massivecore.predicate.Predicate<? super T> where) { return transform(items, where, null, null, null); }
+	@Deprecated public static <T> List<T> transform(Iterable<T> items, com.massivecraft.massivecore.predicate.Predicate<? super T> where, Comparator<? super T> orderby) { return transform(items, where, orderby, null, null); }
+	@Deprecated public static <T> List<T> transform(Iterable<T> items, com.massivecraft.massivecore.predicate.Predicate<? super T> where, Comparator<? super T> orderby, Integer limit) { return transform(items, where, orderby, limit, null); }
+	@Deprecated public static <T> List<T> transform(Iterable<T> items, com.massivecraft.massivecore.predicate.Predicate<? super T> where, Integer limit) { return transform(items, where, null, limit, null); }
+	@Deprecated public static <T> List<T> transform(Iterable<T> items, com.massivecraft.massivecore.predicate.Predicate<? super T> where, Integer limit, Integer offset) { return transform(items, where, null, limit, offset); }
 	
 	// -------------------------------------------- //
 	// SIMPLE CONSTRUCTORS
@@ -1820,6 +1759,18 @@ public class MUtil
 	{
 		return equalsishNumber(number1, number2);
 	}
+
+	// -------------------------------------------- //
+	// SET IF DIFFERENT
+	// -------------------------------------------- //
+
+	public static <T> boolean setIfDifferent(T value, Supplier<T> getter, Consumer<T> setter)
+	{
+		T currentVal = getter.get();
+		if (currentVal == value) return false;
+		setter.accept(value);
+		return true;
+	}
 	
 	// -------------------------------------------- //
 	// SORTING
@@ -1873,6 +1824,7 @@ public class MUtil
 	// -------------------------------------------- //
 	// MATH
 	// -------------------------------------------- //
+
 	public static <T extends Number> T limitNumber(T d, T min, T max)
 	{
 		if (d.doubleValue() < min.doubleValue())
@@ -1912,33 +1864,61 @@ public class MUtil
 		bd = bd.setScale(places, RoundingMode.HALF_UP);
 		return bd.doubleValue();
 	}
-	
+
+	// -------------------------------------------- //
+	// PREDICATE
+	// -------------------------------------------- //
+
+	public static <T> Predicate<T> predicatesAnd(Predicate<? super T>... predicates)
+	{
+		List<Predicate<? super T>> predicateList = Arrays.asList(predicates); // Must be explicit this way
+		return predicatesAnd(predicateList);
+	}
+
+	public static <T> Predicate<T> predicatesAnd(Collection<Predicate<? super T>> predicates)
+	{
+		if (predicates.isEmpty()) throw new IllegalArgumentException("isEmpty");
+
+		PredicateAnd<T> predicate = new PredicateAnd<T>();
+		predicate.predicates = new MassiveList<>(predicates);
+
+		return predicate;
+	}
+
+	private static class PredicateAnd<T> implements Predicate<T>
+	{
+		private List<Predicate<? super T>> predicates;
+
+		@Override
+		public boolean test(T t)
+		{
+			for (Predicate<? super T> predicate : predicates)
+			{
+				if (predicate.test(t)) continue;
+				return false;
+			}
+			return true;
+		}
+	}
+
 	// -------------------------------------------- //
 	// EXTRACTION
 	// -------------------------------------------- //
 	
 	protected static Map<Class<?>, Map<String, Set<Extractor>>> classesPropertiesExtractors = new HashMap<>();
+
 	protected static Map<String, Set<Extractor>> getPropertiesExtractors(Class<?> propertyClass)
 	{
-		Map<String, Set<Extractor>> ret = classesPropertiesExtractors.get(propertyClass);
-		if (ret == null)
-		{
-			ret = new HashMap<>();
-			classesPropertiesExtractors.put(propertyClass, ret);
-		}
-		return ret;
+		classesPropertiesExtractors.computeIfAbsent(propertyClass, x -> new HashMap<>());
+		return classesPropertiesExtractors.get(propertyClass);
 	}
 	
 	protected static Set<Extractor> getExtractors(Class<?> propertyClass, String propertyName)
 	{
 		Map<String, Set<Extractor>> propertiesExtractors = getPropertiesExtractors(propertyClass);
-		Set<Extractor> ret = propertiesExtractors.get(propertyName);
-		if (ret == null)
-		{
-			ret = new HashSet<>();
-			propertiesExtractors.put(propertyName, ret);
-		}
-		return ret;
+
+		propertiesExtractors.computeIfAbsent(propertyName, x -> new HashSet<>());
+		return propertiesExtractors.get(propertyName);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1964,18 +1944,11 @@ public class MUtil
 	
 	static
 	{
-		registerExtractor(CommandSender.class, "sender", ExtractorSender.get());
-		registerExtractor(String.class, "senderId", ExtractorSenderId.get());
-		
-		registerExtractor(Player.class, "player", ExtractorPlayer.get());
-		registerExtractor(String.class, "playerName", ExtractorPlayerName.get());
-		
 		registerExtractor(World.class, "world", ExtractorWorld.get());
 		registerExtractor(String.class, "worldName", ExtractorWorldName.get());
 		
 		// The accountId extractor is used for the money mixin.
-		// For now we act on the name instead of the ID since vault needs names.
-		registerExtractor(String.class, "accountId", ExtractorSenderName.get());
+		registerExtractor(String.class, "accountId", ExtractorSenderId.get());
 	}
 	
 }

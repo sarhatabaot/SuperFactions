@@ -1,8 +1,8 @@
 package com.massivecraft.massivecore.store;
 
+import com.google.gson.JsonElement;
 import com.massivecraft.massivecore.ConfServer;
-import com.massivecraft.massivecore.MassiveCoreMConf;
-import com.massivecraft.massivecore.xlib.gson.JsonElement;
+import com.massivecraft.massivecore.entity.MassiveCoreMConf;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,7 +38,7 @@ public class MStore
 	
 	static
 	{
-		registerDriver(DriverMongo.get());
+		//registerDriver(DriverMongo.get());
 		registerDriver(DriverFlatfile.get());
 	}
 	

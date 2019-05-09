@@ -1,11 +1,11 @@
 package com.massivecraft.massivecore.store.migrator;
 
+
+import com.google.gson.JsonObject;
 import com.massivecraft.massivecore.Active;
 import com.massivecraft.massivecore.MassivePlugin;
 import com.massivecraft.massivecore.collections.MassiveList;
-import com.massivecraft.massivecore.store.Entity;
 import com.massivecraft.massivecore.util.Txt;
-import com.massivecraft.massivecore.xlib.gson.JsonObject;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -114,7 +114,18 @@ public class MigratorRoot implements Migrator, Active
 		if (entityVersionCurrent != entityVersionExpected) throw new IllegalArgumentException(String.format("Entiy version: %d Expected: %d", entityVersionCurrent, entityVersionExpected));
 
 		// ... do the migration.
-		this.migrateInner(entity);
+
+		try
+		{
+			this.migrateInner(entity);
+		}
+		catch (Throwable t)
+		{
+			System.out.println("Problem with migrating entity: ");
+			System.out.println(entity.toString());
+			throw t;
+		}
+
 		this.migrateVersion(entity);
 	}
 

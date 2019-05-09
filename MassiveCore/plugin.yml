@@ -3,8 +3,9 @@ name: ${project.name}
 version: ${project.version}
 website: ${project.url}
 description: ${project.description}
-authors: [Cayorion]
+authors: [Madus, Cayorion, Ulumulu1510]
 load: startup
+api-version: 1.13
 permissions:
 # -------------------------------------------- #
 # THE REAL NODES

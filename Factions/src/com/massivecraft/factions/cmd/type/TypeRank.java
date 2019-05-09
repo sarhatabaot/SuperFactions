@@ -1,127 +1,112 @@
 package com.massivecraft.factions.cmd.type;
 
-import com.massivecraft.factions.Rel;
-import com.massivecraft.massivecore.collections.MassiveMap;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.factions.entity.Rank;
+import com.massivecraft.massivecore.collections.MassiveList;
 import com.massivecraft.massivecore.collections.MassiveSet;
-import com.massivecraft.massivecore.command.type.enumeration.TypeEnum;
-import com.massivecraft.massivecore.util.MUtil;
+import org.bukkit.command.CommandSender;
 
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+
 import java.util.Set;
 
-public class TypeRank extends TypeEnum<Rel>
+public class TypeRank extends TypeEntityInternalFaction<Rank>
 {
-	// -------------------------------------------- //
-	// CONSTANTS
-	// -------------------------------------------- //
-	
-	public static final Set<String> NAMES_PROMOTE = new MassiveSet<>(
-		"Promote",
-		"+",
-		"Plus",
-		"Up"
-	);
-	
-	public static final Set<String> NAMES_DEMOTE = new MassiveSet<>(
-		"Demote",
-		"-",
-		"Minus",
-		"Down"
-	);
-
 	// -------------------------------------------- //
 	// INSTANCE & CONSTRUCT
 	// -------------------------------------------- //
-	// Because of the caching in TypeAbstractChoice, we want only one of each instance.
-	
-	// Null instance, doesn't allow promote and demote.
-	private static final TypeRank i = new TypeRank(null);
+
+	private static TypeRank i = new TypeRank();
 	public static TypeRank get() { return i; }
-	
-	// Cached instances, does allow promote and demote.
-	private static final Map<Rel, TypeRank> instances;
-	static
+	private TypeRank()
 	{
-		Map<Rel, TypeRank> result = new MassiveMap<>();
-		for (Rel rel : Rel.values())
-		{
-			if ( ! rel.isRank()) continue;
-			result.put(rel, new TypeRank(rel));
-		}
-		result.put(null, i);
-		instances = Collections.unmodifiableMap(result);
+		super(Rank.class);
+		this.currentRank = null;
 	}
-	public static TypeRank get(Rel rank) { return instances.get(rank); }
-	
-	// Constructor
-	public TypeRank(Rel rank)
+
+	@Deprecated public static TypeRank get(Faction faction) { return new TypeRank(faction, null); }
+	@Deprecated public TypeRank(Faction faction)
 	{
-		super(Rel.class);
-		if (rank != null && ! rank.isRank()) throw new IllegalArgumentException(rank + " is not a valid rank");
-		this.startRank = rank;
-		
-		// Do setAll with only ranks.
-		List<Rel> all = MUtil.list(Rel.values());
-		for (Iterator<Rel> it = all.iterator(); it.hasNext(); )
-		{
-			if ( ! it.next().isRank()) it.remove();
-		}
-		
-		this.setAll(all);
+		this(faction, null);
 	}
-	
-	// -------------------------------------------- //
-	// FIELDS
-	// -------------------------------------------- //
-	
-	// This must be final, for caching in TypeAbstractChoice to work.
-	private final Rel startRank;
-	public Rel getStartRank() { return this.startRank; }
-	
+
+	public static TypeRank get(Faction faction, Rank rank) { return new TypeRank(faction, rank); }
+	public TypeRank(Faction faction, Rank rank)
+	{
+		super(Rank.class, faction);
+		this.currentRank = rank;
+
+		// When setAll is done in the super constructor some optimisations are done
+		// which don't take the promote/demote thing into account.
+		this.setAll(this.getAll(faction));
+	}
+
+	private final Rank currentRank;
+
+
 	// -------------------------------------------- //
 	// OVERRIDE
 	// -------------------------------------------- //
-	
+
 	@Override
-	public String getName()
+	public Collection<Rank> getAll(Faction faction)
 	{
-		return "rank";
+		return faction.getRanks().getAll();
 	}
-	
+
 	@Override
-	public String getNameInner(Rel value)
+	public Collection<String> getTabList(CommandSender sender, String arg)
 	{
-		return value.getName();
+		List<String> ret = new MassiveList<>(super.getTabList(sender, arg));
+		ret.add("promote");
+		ret.add("demote");
+		return ret;
 	}
-	
+
 	@Override
-	public Set<String> getNamesInner(Rel value)
+	public Set<String> getNamesInner(Rank value)
 	{
-		// Create
-		Set<String> ret = new MassiveSet<>();
-		
-		// Fill Exact
-		ret.addAll(value.getNames());
-		
-		// Fill Relative
-		Rel start = this.getStartRank();
-		if (start != null)
+		Set<String> names = new MassiveSet<>();
+		names.add(value.getName());
+
+		if (this.currentRank != null)
 		{
-			if (value == Rel.LEADER && start == Rel.OFFICER) ret.addAll(NAMES_PROMOTE);
-			
-			if (value == Rel.OFFICER && start == Rel.MEMBER) ret.addAll(NAMES_PROMOTE);
-			if (value == Rel.OFFICER && start == Rel.LEADER) ret.addAll(NAMES_DEMOTE);
-			
-			if (value == Rel.MEMBER && start == Rel.RECRUIT) ret.addAll(NAMES_PROMOTE);
-			if (value == Rel.MEMBER && start == Rel.OFFICER) ret.addAll(NAMES_DEMOTE);
-			
-			if (value == Rel.RECRUIT && start == Rel.MEMBER) ret.addAll(NAMES_DEMOTE);
+			// You can't use "promote" to make someone leader.
+			Rank promote = getPromote(currentRank);
+			if (value == promote && !promote.isLeader()) names.add("promote");
+
+			if (value == getDemote(currentRank)) names.add("demote");
 		}
-		
-		// Return
+
+		return names;
+	}
+
+	private static Rank getPromote(Rank rank)
+	{
+		Rank ret = null;
+		for (Rank r : rank.getFaction().getRanks().getAll())
+		{
+			if (rank == r) continue;
+			if (rank.isMoreThan(r)) continue;
+			if (ret != null && ret.isLessThan(r)) continue;
+
+			ret = r;
+		}
+		return ret;
+	}
+
+	private static Rank getDemote(Rank rank)
+	{
+		Rank ret = null;
+		for (Rank r : rank.getFaction().getRanks().getAll())
+		{
+			if (rank == r) continue;
+			if (rank.isLessThan(r)) continue;
+			if (ret != null && ret.isMoreThan(r)) continue;
+
+			ret = r;
+		}
 		return ret;
 	}
 

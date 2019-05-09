@@ -1,16 +1,15 @@
 package com.massivecraft.factions.cmd;
 
-import com.massivecraft.factions.cmd.type.TypeMPlayer;
-
-public class CmdFactionsPowerBoostPlayer extends CmdFactionsPowerBoostAbstract
+public class CmdFactionsPowerboostPlayer extends FactionsCommand
 {
 	// -------------------------------------------- //
-	// CONSTRUCT
+	// FIELDS
 	// -------------------------------------------- //
-	
-	public CmdFactionsPowerBoostPlayer()
-	{
-		super(TypeMPlayer.get(), "player");
-	}
+
+	public CmdFactionsPowerboostPlayerShow cmdFactionsPowerBoostPlayerShow = new CmdFactionsPowerboostPlayerShow();
+	public CmdFactionsPowerboostPlayerSet cmdFactionsPowerBoostPlayerSet = new CmdFactionsPowerboostPlayerSet();
+	public CmdFactionsPowerboostPlayerAdd cmdFactionsPowerBoostPlayerAdd = new CmdFactionsPowerboostPlayerAdd();
+	public CmdFactionsPowerboostPlayerTake cmdFactionsPowerBoostPlayerTake = new CmdFactionsPowerboostPlayerTake();
+	public CmdFactionsPowerboostPlayerMultiply cmdFactionsPowerBoostPlayerMultiply = new CmdFactionsPowerboostPlayerMultiply();
 	
 }

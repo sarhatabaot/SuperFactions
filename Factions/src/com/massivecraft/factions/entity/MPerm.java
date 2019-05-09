@@ -6,22 +6,29 @@ import com.massivecraft.factions.Rel;
 import com.massivecraft.factions.TerritoryAccess;
 import com.massivecraft.factions.cmd.CmdFactions;
 import com.massivecraft.factions.event.EventFactionsCreatePerms;
+import com.massivecraft.massivecore.Identified;
 import com.massivecraft.massivecore.Named;
 import com.massivecraft.massivecore.Prioritized;
 import com.massivecraft.massivecore.Registerable;
+import com.massivecraft.massivecore.collections.MassiveList;
 import com.massivecraft.massivecore.collections.MassiveSet;
 import com.massivecraft.massivecore.comparator.ComparatorSmart;
 import com.massivecraft.massivecore.predicate.PredicateIsRegistered;
 import com.massivecraft.massivecore.ps.PS;
 import com.massivecraft.massivecore.store.Entity;
+import com.massivecraft.massivecore.util.IdUtil;
 import com.massivecraft.massivecore.util.MUtil;
 import com.massivecraft.massivecore.util.Txt;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, Named
 {
@@ -41,19 +48,21 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 	public final static transient String ID_MOTD = "motd";
 	public final static transient String ID_INVITE = "invite";
 	public final static transient String ID_KICK = "kick";
+	public final static transient String ID_RANK = "rank";
 	public final static transient String ID_TITLE = "title";
-	public final static transient String ID_HOME = "home";
-	public final static transient String ID_SETHOME = "sethome";
+	public final static transient String ID_WARP = "warp";
+	public final static transient String ID_SETWARP = "setwarp";
 	public final static transient String ID_DEPOSIT = "deposit";
 	public final static transient String ID_WITHDRAW = "withdraw";
 	public final static transient String ID_TERRITORY = "territory";
 	public final static transient String ID_ACCESS = "access";
+	public final static transient String ID_VOTE = "VOTE";
+	public final static transient String ID_CREATEVOTE = "createvote";
 	public final static transient String ID_CLAIMNEAR = "claimnear";
 	public final static transient String ID_REL = "rel";
 	public final static transient String ID_DISBAND = "disband";
 	public final static transient String ID_FLAGS = "flags";
 	public final static transient String ID_PERMS = "perms";
-	public final static transient String ID_STATUS = "status";
 
 	public final static transient int PRIORITY_BUILD = 1000;
 	public final static transient int PRIORITY_PAINBUILD = 2000;
@@ -67,19 +76,21 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 	public final static transient int PRIORITY_MOTD = 9000;
 	public final static transient int PRIORITY_INVITE = 10000;
 	public final static transient int PRIORITY_KICK = 11000;
+	public final static transient int PRIORITY_RANK = 11500;
 	public final static transient int PRIORITY_TITLE = 12000;
-	public final static transient int PRIORITY_HOME = 13000;
-	public final static transient int PRIORITY_SETHOME = 14000;
+	public final static transient int PRIORITY_WARP = 13000;
+	public final static transient int PRIORITY_SETWARP = 14000;
 	public final static transient int PRIORITY_DEPOSIT = 15000;
 	public final static transient int PRIORITY_WITHDRAW = 16000;
 	public final static transient int PRIORITY_TERRITORY = 17000;
 	public final static transient int PRIORITY_ACCESS = 18000;
+	public final static transient int PRIORITY_VOTE = 18200;
+	public final static transient int PRIORITY_CREATEVOTE = 18600;
 	public final static transient int PRIORITY_CLAIMNEAR = 19000;
 	public final static transient int PRIORITY_REL = 20000;
 	public final static transient int PRIORITY_DISBAND = 21000;
 	public final static transient int PRIORITY_FLAGS = 22000;
 	public final static transient int PRIORITY_PERMS = 23000;
-	public final static transient int PRIORITY_STATUS = 24000;
 	
 	// -------------------------------------------- //
 	// META: CORE
@@ -117,14 +128,16 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 		getPermMotd();
 		getPermInvite();
 		getPermKick();
+		getPermRank();
 		getPermTitle();
-		getPermHome();
-		getPermStatus();
-		getPermSethome();
+		getPermWarp();
+		getPermSetwarp();
 		getPermDeposit();
 		getPermWithdraw();
 		getPermTerritory();
 		getPermAccess();
+		getPermVote();
+		getPermCreateVote();
 		getPermClaimnear();
 		getPermRel();
 		getPermDisband();
@@ -132,33 +145,35 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 		getPermPerms();
 	}
 	
-	public static MPerm getPermBuild() { return getCreative(PRIORITY_BUILD, ID_BUILD, ID_BUILD, "edit the terrain", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER), true, true, true); }
-	public static MPerm getPermPainbuild() { return getCreative(PRIORITY_PAINBUILD, ID_PAINBUILD, ID_PAINBUILD, "edit, take damage", new MassiveSet<Rel>(), true, true, true); }
-	public static MPerm getPermDoor() { return getCreative(PRIORITY_DOOR, ID_DOOR, ID_DOOR, "use doors", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER, Rel.RECRUIT, Rel.ALLY), true, true, true); }
-	public static MPerm getPermButton() { return getCreative(PRIORITY_BUTTON, ID_BUTTON, ID_BUTTON, "use stone buttons", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER, Rel.RECRUIT, Rel.ALLY), true, true, true); }
-	public static MPerm getPermLever() { return getCreative(PRIORITY_LEVER, ID_LEVER, ID_LEVER, "use levers", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER, Rel.RECRUIT, Rel.ALLY), true, true, true); }
-	public static MPerm getPermContainer() { return getCreative(PRIORITY_CONTAINER, ID_CONTAINER, ID_CONTAINER, "use containers", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER), true, true, true); }
+	public static MPerm getPermBuild() { return getCreative(PRIORITY_BUILD, ID_BUILD, ID_BUILD, "edit the terrain", MUtil.set("LEADER", "OFFICER", "MEMBER"), true, true, true); }
+	public static MPerm getPermPainbuild() { return getCreative(PRIORITY_PAINBUILD, ID_PAINBUILD, ID_PAINBUILD, "edit, take damage", new MassiveSet<>(), true, true, true); }
+	public static MPerm getPermDoor() { return getCreative(PRIORITY_DOOR, ID_DOOR, ID_DOOR, "use doors", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT", "ALLY"), true, true, true); }
+	public static MPerm getPermButton() { return getCreative(PRIORITY_BUTTON, ID_BUTTON, ID_BUTTON, "use stone buttons", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT", "ALLY"), true, true, true); }
+	public static MPerm getPermLever() { return getCreative(PRIORITY_LEVER, ID_LEVER, ID_LEVER, "use levers", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT", "ALLY"), true, true, true); }
+	public static MPerm getPermContainer() { return getCreative(PRIORITY_CONTAINER, ID_CONTAINER, ID_CONTAINER, "use containers", MUtil.set("LEADER", "OFFICER", "MEMBER"), true, true, true); }
 	
-	public static MPerm getPermName() { return getCreative(PRIORITY_NAME, ID_NAME, ID_NAME, "set name", MUtil.set(Rel.LEADER), false, true, true); }
-	public static MPerm getPermDesc() { return getCreative(PRIORITY_DESC, ID_DESC, ID_DESC, "set description", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermMotd() { return getCreative(PRIORITY_MOTD, ID_MOTD, ID_MOTD, "set motd", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermInvite() { return getCreative(PRIORITY_INVITE, ID_INVITE, ID_INVITE, "invite players", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermStatus() { return getCreative(PRIORITY_STATUS, ID_STATUS, ID_STATUS, "show status", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermKick() { return getCreative(PRIORITY_KICK, ID_KICK, ID_KICK, "kick members", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermTitle() { return getCreative(PRIORITY_TITLE, ID_TITLE, ID_TITLE, "set titles", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermHome() { return getCreative(PRIORITY_HOME, ID_HOME, ID_HOME, "teleport home", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER, Rel.RECRUIT, Rel.ALLY), false, true, true); }
-	public static MPerm getPermSethome() { return getCreative(PRIORITY_SETHOME, ID_SETHOME, ID_SETHOME, "set the home", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermDeposit() { return getCreative(PRIORITY_DEPOSIT, ID_DEPOSIT, ID_DEPOSIT, "deposit money", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER, Rel.RECRUIT, Rel.ALLY, Rel.TRUCE, Rel.NEUTRAL, Rel.ENEMY), false, false, false); } // non editable, non visible.
-	public static MPerm getPermWithdraw() { return getCreative(PRIORITY_WITHDRAW, ID_WITHDRAW, ID_WITHDRAW, "withdraw money", MUtil.set(Rel.LEADER), false, true, true); }
-	public static MPerm getPermTerritory() { return getCreative(PRIORITY_TERRITORY, ID_TERRITORY, ID_TERRITORY, "claim or unclaim", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermAccess() { return getCreative(PRIORITY_ACCESS, ID_ACCESS, ID_ACCESS, "grant territory", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermClaimnear() { return getCreative(PRIORITY_CLAIMNEAR, ID_CLAIMNEAR, ID_CLAIMNEAR, "claim nearby", MUtil.set(Rel.LEADER, Rel.OFFICER, Rel.MEMBER, Rel.RECRUIT, Rel.ALLY), false, false, false); } // non editable, non visible.
-	public static MPerm getPermRel() { return getCreative(PRIORITY_REL, ID_REL, ID_REL, "change relations", MUtil.set(Rel.LEADER, Rel.OFFICER), false, true, true); }
-	public static MPerm getPermDisband() { return getCreative(PRIORITY_DISBAND, ID_DISBAND, ID_DISBAND, "disband the faction", MUtil.set(Rel.LEADER), false, true, true); }
-	public static MPerm getPermFlags() { return getCreative(PRIORITY_FLAGS, ID_FLAGS, ID_FLAGS, "manage flags", MUtil.set(Rel.LEADER), false, true, true); }
-	public static MPerm getPermPerms() { return getCreative(PRIORITY_PERMS, ID_PERMS, ID_PERMS, "manage permissions", MUtil.set(Rel.LEADER), false, true, true); }
+	public static MPerm getPermName() { return getCreative(PRIORITY_NAME, ID_NAME, ID_NAME, "set name", MUtil.set("LEADER"), false, true, true); }
+	public static MPerm getPermDesc() { return getCreative(PRIORITY_DESC, ID_DESC, ID_DESC, "set description", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermMotd() { return getCreative(PRIORITY_MOTD, ID_MOTD, ID_MOTD, "set motd", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermInvite() { return getCreative(PRIORITY_INVITE, ID_INVITE, ID_INVITE, "invite players", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermKick() { return getCreative(PRIORITY_KICK, ID_KICK, ID_KICK, "kick members", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermRank() { return getCreative(PRIORITY_RANK, ID_RANK, ID_RANK, "change ranks", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermTitle() { return getCreative(PRIORITY_TITLE, ID_TITLE, ID_TITLE, "set titles", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermWarp() { return getCreative(PRIORITY_WARP, ID_WARP, ID_WARP, "teleport to warp", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT", "ALLY"), false, true, true); }
+	public static MPerm getPermSetwarp() { return getCreative(PRIORITY_SETWARP, ID_SETWARP, ID_SETWARP, "set warps", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermDeposit() { return getCreative(PRIORITY_DEPOSIT, ID_DEPOSIT, ID_DEPOSIT, "deposit money", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT", "ALLY", "TRUCE", "NEUTRAL", "ENEMY"), false, false, false); } // non editable, non visible.
+	public static MPerm getPermWithdraw() { return getCreative(PRIORITY_WITHDRAW, ID_WITHDRAW, ID_WITHDRAW, "withdraw money", MUtil.set("LEADER"), false, true, true); }
+	public static MPerm getPermTerritory() { return getCreative(PRIORITY_TERRITORY, ID_TERRITORY, ID_TERRITORY, "claim or unclaim", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermAccess() { return getCreative(PRIORITY_ACCESS, ID_ACCESS, ID_ACCESS, "grant territory", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermVote() { return getCreative(PRIORITY_VOTE, ID_VOTE, ID_VOTE, "vote", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT"), false, true, true); }
+	public static MPerm getPermCreateVote() { return getCreative(PRIORITY_CREATEVOTE, ID_CREATEVOTE, ID_CREATEVOTE, "manage votes", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermClaimnear() { return getCreative(PRIORITY_CLAIMNEAR, ID_CLAIMNEAR, ID_CLAIMNEAR, "claim nearby", MUtil.set("LEADER", "OFFICER", "MEMBER", "RECRUIT", "ALLY"), false, false, false); } // non editable, non visible.
+	public static MPerm getPermRel() { return getCreative(PRIORITY_REL, ID_REL, ID_REL, "change relations", MUtil.set("LEADER", "OFFICER"), false, true, true); }
+	public static MPerm getPermDisband() { return getCreative(PRIORITY_DISBAND, ID_DISBAND, ID_DISBAND, "disband the faction", MUtil.set("LEADER"), false, true, true); }
+	public static MPerm getPermFlags() { return getCreative(PRIORITY_FLAGS, ID_FLAGS, ID_FLAGS, "manage flags", MUtil.set("LEADER"), false, true, true); }
+	public static MPerm getPermPerms() { return getCreative(PRIORITY_PERMS, ID_PERMS, ID_PERMS, "manage permissions", MUtil.set("LEADER"), false, true, true); }
 	
-	public static MPerm getCreative(int priority, String id, String name, String desc, Set<Rel> standard, boolean territory, boolean editable, boolean visible)
+	public static MPerm getCreative(int priority, String id, String name, String desc, Set<String> standard, boolean territory, boolean editable, boolean visible)
 	{
 		MPerm ret = MPermColl.get().get(id, false);
 		if (ret != null)
@@ -200,7 +215,13 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 	private transient boolean registered = false;
 	public boolean isRegistered() { return this.registered; }
 	public void setRegistered(boolean registered) { this.registered = registered; }
-	
+
+	// -------------------------------------------- //
+	// VERSION
+	// -------------------------------------------- //
+
+	public int version = 1;
+
 	// -------------------------------------------- //
 	// FIELDS
 	// -------------------------------------------- //
@@ -233,9 +254,10 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 	// What is the standard (aka default) perm value?
 	// This value will be set for factions from the beginning.
 	// Example: ... set of relations ...
-	private Set<Rel> standard = new MassiveSet<>();
-	public Set<Rel> getStandard() { return this.standard; }
-	public MPerm setStandard(Set<Rel> standard) { this.standard = standard; this.changed(); return this; }
+	@Deprecated
+	private Set<String> standard = new MassiveSet<>();
+	@Deprecated public Set<String> getStandard() { return this.standard; }
+	@Deprecated public MPerm setStandard(Set<String> standard) { this.standard = standard; this.changed(); return this; }
 	
 	// Is this a territory perm meaning it has to do with territory construction, modification or interaction?
 	// True Examples: build, container, door, lever etc.
@@ -273,7 +295,7 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 		// No argument constructor for GSON
 	}
 	
-	public MPerm(int priority, String name, String desc, Set<Rel> standard, boolean territory, boolean editable, boolean visible)
+	public MPerm(int priority, String name, String desc, Set<String> standard, boolean territory, boolean editable, boolean visible)
 	{
 		this.priority = priority;
 		this.name = name;
@@ -345,9 +367,8 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 		// Null Check
 		if (faction == null) throw new NullPointerException("faction");
 		if (hostFaction == null) throw new NullPointerException("hostFaction");
-		
-		Rel rel = faction.getRelationTo(hostFaction);
-		return hostFaction.isPermitted(this, rel);
+
+		return hostFaction.isFactionPermitted(faction, this);
 	}
 	
 	public boolean has(MPlayer mplayer, Faction hostFaction, boolean verboose)
@@ -359,7 +380,8 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 		if (mplayer.isOverriding()) return true;
 		
 		Rel rel = mplayer.getRelationTo(hostFaction);
-		if (hostFaction.isPermitted(this, rel)) return true;
+		MPermable permable = rel == Rel.FACTION ? mplayer.getRank() : rel;
+		if (hostFaction.isPlayerPermitted(mplayer, this)) return true;
 		
 		if (verboose) mplayer.message(this.createDeniedMessage(mplayer, hostFaction));
 		
@@ -390,62 +412,84 @@ public class MPerm extends Entity<MPerm> implements Prioritized, Registerable, N
 				return accessStatus.hasAccess();
 			}
 		}
-		
+
 		return this.has(mplayer, hostFaction, verboose);
 	}
 
 	// -------------------------------------------- //
-	// UTIL: ASCII
+	// PERMABLES
 	// -------------------------------------------- //
-	
-	public static String getStateHeaders()
+
+	public static List<MPermable> getPermables(Faction faction)
 	{
-		String ret = "";
-		for (Rel rel : Rel.values())
-		{
-			ret += rel.getColor().toString();
-			ret += rel.toString().substring(0, 3);
-			ret += " ";
-		}
-		
-		return ret;
+		if (faction == null) throw new NullPointerException("faction");
+
+		List<MPermable> list = new MassiveList<>();
+
+		list.addAll(Arrays.asList(Rel.values()));
+		list.remove(Rel.FACTION);
+
+		list.addAll(faction.getRanks().getAll(Comparator.comparingInt(Rank::getPriority)));
+
+		return list;
 	}
-	
-	public String getStateInfo(Set<Rel> value, boolean withDesc)
+
+	public interface MPermable extends Named, Identified
 	{
-		String ret = "";
-		
-		for (Rel rel : Rel.values())
+		default boolean isRelation()
 		{
-			if (value.contains(rel))
-			{
-				ret += "<g>YES";
-			}
-			else
-			{
-				ret += "<b>NOO";
-			}
-			ret += " ";
+			return this instanceof Rel;
 		}
-		
-		String color = "<aqua>";
-		if (!this.isVisible())
+
+		default boolean isRank()
 		{
-			color = "<silver>";
+			return this instanceof Rank;
 		}
-		else if (this.isEditable())
+
+		default String getShortName()
 		{
-			color = "<pink>";
+			return this.getName().substring(0, 3).toUpperCase();
 		}
-		
-		ret += color;
-		ret += this.getName();
-		
-		ret = Txt.parse(ret);
-		
-		if (withDesc) ret += " <i>" + this.getDesc();
-		
-		return ret;
+
+		String getDisplayName(Object senderObject);
+	}
+
+	public static Set<MPermable> idsToMPermables(Collection<String> ids)
+	{
+		return ids.stream()
+			.map(MPerm::idToMPermable)
+			.collect(Collectors.toSet());
+	}
+
+	public static MPermable idToMPermable(String id)
+	{
+		return idToMPermableOptional(id).orElseThrow(() -> new RuntimeException(id));
+	}
+
+	public static Optional<MPermable> idToMPermableOptional(String id)
+	{
+		MPlayer mplayer = MPlayerColl.get().get(id, false);
+		if (mplayer != null) return Optional.of(mplayer);
+
+		// Workaround for registered senders
+		// Players ussually have a power, which makes sure they are in the coll
+		if (IdUtil.getRegistryIdToSender().containsKey(id)) return Optional.of(MPlayerColl.get().get(id, true));
+
+		Faction faction = Faction.get(id);
+		if (faction != null) return Optional.of(faction);
+
+		for (Faction f : FactionColl.get().getAll())
+		{
+			Rank rank = f.getRank(id);
+			if (rank != null) return Optional.of(rank);
+		}
+
+		if (Rel.ALLY.name().equalsIgnoreCase(id)) return Optional.of(Rel.ALLY);
+		if (Rel.TRUCE.name().equalsIgnoreCase(id)) return Optional.of(Rel.TRUCE);
+		if (Rel.NEUTRAL.name().equalsIgnoreCase(id)) return Optional.of(Rel.NEUTRAL);
+		if (Rel.ENEMY.name().equalsIgnoreCase(id)) return Optional.of(Rel.ENEMY);
+
+		return Optional.empty();
 	}
 	
 }

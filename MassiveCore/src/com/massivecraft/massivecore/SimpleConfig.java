@@ -1,8 +1,8 @@
 package com.massivecraft.massivecore;
 
+import com.google.gson.Gson;
 import com.massivecraft.massivecore.store.accessor.Accessor;
 import com.massivecraft.massivecore.util.DiscUtil;
-import com.massivecraft.massivecore.xlib.gson.Gson;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
@@ -67,7 +67,7 @@ public class SimpleConfig
 			{
 				try
 				{
-					toShallowLoad = this.getClass().newInstance();
+					toShallowLoad = this.getClass().getDeclaredConstructor().newInstance();
 				}
 				catch (Exception e)
 				{

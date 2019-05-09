@@ -1,7 +1,6 @@
 package com.massivecraft.factions.cmd;
 
 import com.massivecraft.factions.Factions;
-import com.massivecraft.factions.Rel;
 import com.massivecraft.factions.cmd.req.ReqHasntFaction;
 import com.massivecraft.factions.cmd.type.TypeFactionNameStrict;
 import com.massivecraft.factions.entity.Faction;
@@ -27,7 +26,7 @@ public class CmdFactionsCreate extends FactionsCommand
 		this.addAliases("new");
 		
 		// Parameters
-		this.addParameter(TypeFactionNameStrict.get(), "name");
+		this.addParameter(TypeFactionNameStrict.get(), "name").setDesc("the name of your new faction");
 		
 		// Requirements
 		this.addRequirements(ReqHasntFaction.get());
@@ -55,7 +54,7 @@ public class CmdFactionsCreate extends FactionsCommand
 		Faction faction = FactionColl.get().create(factionId);
 		faction.setName(newName);
 		
-		msender.setRole(Rel.LEADER);
+		msender.setRank(faction.getLeaderRank());
 		msender.setFaction(faction);
 		
 		EventFactionsMembershipChange joinEvent = new EventFactionsMembershipChange(sender, msender, faction, MembershipChangeReason.CREATE);

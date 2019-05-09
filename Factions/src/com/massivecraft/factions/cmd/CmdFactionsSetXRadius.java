@@ -49,10 +49,4 @@ public abstract class CmdFactionsSetXRadius extends CmdFactionsSetX
 		return radius;
 	}
 	
-	public Integer getRadiusZero() throws MassiveException
-	{
-		Integer ret = this.getRadius();
-		return ret - 1;
-	}
-	
 }

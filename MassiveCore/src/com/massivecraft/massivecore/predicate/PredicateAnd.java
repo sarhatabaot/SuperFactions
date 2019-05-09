@@ -1,10 +1,11 @@
 package com.massivecraft.massivecore.predicate;
 
-import com.massivecraft.massivecore.xlib.guava.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
 import java.util.List;
 
+@Deprecated
 public class PredicateAnd<T> implements Predicate<T>
 {
 	// -------------------------------------------- //

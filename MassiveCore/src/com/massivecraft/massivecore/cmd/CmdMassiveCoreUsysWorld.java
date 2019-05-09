@@ -1,7 +1,7 @@
 package com.massivecraft.massivecore.cmd;
 
 import com.massivecraft.massivecore.MassiveException;
-import com.massivecraft.massivecore.Multiverse;
+import com.massivecraft.massivecore.entity.Multiverse;
 import com.massivecraft.massivecore.command.type.primitive.TypeString;
 import com.massivecraft.massivecore.command.type.store.TypeMultiverse;
 
@@ -15,7 +15,7 @@ public class CmdMassiveCoreUsysWorld extends MassiveCoreCommand
 	{
 		// Parameters
 		this.addParameter(TypeString.get(), "world").setDesc("the world to move");
-		this.addParameter(TypeString.get(), "universe").setDesc("the universe to move the world ro");
+		this.addParameter(TypeString.get(), "universe").setDesc("the universe to move the world to");
 		this.addParameter(TypeMultiverse.get(), "multiverse").setDesc("the multiverse of the universe to move the world to");
 	}
 	

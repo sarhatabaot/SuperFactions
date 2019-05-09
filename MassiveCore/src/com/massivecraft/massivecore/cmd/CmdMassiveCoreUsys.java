@@ -1,6 +1,6 @@
 package com.massivecraft.massivecore.cmd;
 
-import com.massivecraft.massivecore.MassiveCoreMConf;
+import com.massivecraft.massivecore.entity.MassiveCoreMConf;
 
 import java.util.List;
 
@@ -20,6 +20,5 @@ public class CmdMassiveCoreUsys extends MassiveCoreCommand
 	public CmdMassiveCoreUsysMultiverse cmdMassiveCoreUsysMultiverse = new CmdMassiveCoreUsysMultiverse();
 	public CmdMassiveCoreUsysUniverse cmdMassiveCoreUsysUniverse = new CmdMassiveCoreUsysUniverse();
 	public CmdMassiveCoreUsysWorld cmdMassiveCoreUsysWorld = new CmdMassiveCoreUsysWorld();
-	public CmdMassiveCoreUsysAspect cmdMassiveCoreUsysAspect = new CmdMassiveCoreUsysAspect();
 	
 }

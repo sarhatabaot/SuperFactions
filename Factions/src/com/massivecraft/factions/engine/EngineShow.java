@@ -153,7 +153,7 @@ public class EngineShow extends Engine
 				// BANK
 				if (MConf.get().bankEnabled)
 				{
-					double bank = Money.get(faction);
+					double bank = Econ.getMoney(faction);
 					String bankDesc = Txt.parse("<h>%s", Money.format(bank, true));
 					show(idPriorityLiness, SHOW_ID_FACTION_BANK, SHOW_PRIORITY_FACTION_BANK, "Bank", bankDesc);
 				}
@@ -167,7 +167,7 @@ public class EngineShow extends Engine
 		List<String> followerNamesOffline = new ArrayList<>();
 
 		List<MPlayer> followers = faction.getMPlayers();
-		Collections.sort(followers, ComparatorMPlayerRole.get());
+		followers.sort(ComparatorMPlayerRole.get());
 		for (MPlayer follower : followers)
 		{
 			if (follower.isOnline(sender))

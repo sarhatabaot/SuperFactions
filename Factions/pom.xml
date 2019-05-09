@@ -3,10 +3,9 @@
 
     <!-- Parent -->
     <parent>
-        <groupId>com.massivecraft.massivesuper</groupId>
-        <artifactId>MassiveSuper</artifactId>
-        <version>2.14.1-SNAPSHOT</version>
-        <relativePath>../MassiveSuper</relativePath>
+        <groupId>com.massivecraft</groupId>
+        <artifactId>MassiveCraft</artifactId>
+        <version>3.2.0</version>
     </parent>
 
     <!-- Basics -->
@@ -43,6 +42,10 @@
         <!-- WorldGuard -->
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
+            <artifactId>worldguard-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-legacy</artifactId>
         </dependency>
         <!-- Vault -->
@@ -50,15 +53,20 @@
             <groupId>net.milkbowl.vault</groupId>
             <artifactId>VaultAPI</artifactId>
         </dependency>
-        <!-- Herochat -->
-        <dependency>
-            <groupId>unknown.plugins</groupId>
-            <artifactId>Herochat</artifactId>
-        </dependency>
         <!-- LWC -->
         <dependency>
             <groupId>com.github.Tsuser1</groupId>
             <artifactId>Modern-LWC</artifactId>
+        </dependency>
+        <!-- PlaceholderAPI -->
+        <dependency>
+          <groupId>me.clip</groupId>
+          <artifactId>placeholderapi</artifactId>
+        </dependency>
+        <!-- MineverseChat/VentureChat -->
+        <dependency>
+            <groupId>com.cnaude.venturechat</groupId>
+            <artifactId>VentureChat</artifactId>
         </dependency>
     </dependencies>
 
@@ -81,5 +89,5 @@
             </resource>
         </resources>
     </build>
-    
+
 </project>

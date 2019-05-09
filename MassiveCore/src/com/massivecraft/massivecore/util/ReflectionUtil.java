@@ -1,11 +1,8 @@
 package com.massivecraft.massivecore.util;
 
+import com.google.common.reflect.ClassPath;
 import com.massivecraft.massivecore.collections.MassiveList;
 import com.massivecraft.massivecore.comparator.ComparatorNaturalOrder;
-import com.massivecraft.massivecore.predicate.Predicate;
-import com.massivecraft.massivecore.predicate.PredicateAnd;
-import com.massivecraft.massivecore.xlib.guava.reflect.ClassPath;
-import com.massivecraft.massivecore.xlib.guava.reflect.ClassPath.ClassInfo;
 import org.bukkit.Bukkit;
 
 import java.io.IOException;
@@ -14,7 +11,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -22,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ReflectionUtil
 {
@@ -29,14 +26,14 @@ public class ReflectionUtil
 	// CONSTANTS
 	// -------------------------------------------- //
 	
-	private static Field FIELD_DOT_MODIFIERS;
+	//private static Field FIELD_DOT_MODIFIERS;
 	
 	static
 	{
 		try
 		{
-			FIELD_DOT_MODIFIERS = Field.class.getDeclaredField("modifiers");
-			FIELD_DOT_MODIFIERS.setAccessible(true);
+			//FIELD_DOT_MODIFIERS = Field.class.getDeclaredField("modifiers");
+			//FIELD_DOT_MODIFIERS.setAccessible(true);
 		}
 		catch (Exception e)
 		{
@@ -60,7 +57,7 @@ public class ReflectionUtil
 			
 			// Remove the final modifier from the field.
 			// http://stackoverflow.com/questions/2474017/using-reflection-to-change-static-final-file-separatorchar-for-unit-testing
-			FIELD_DOT_MODIFIERS.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+			//FIELD_DOT_MODIFIERS.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 		}
 		catch (Exception e)
 		{
@@ -216,7 +213,7 @@ public class ReflectionUtil
 	{
 		try
 		{
-			return (T) clazz.newInstance();
+			return (T) clazz.getDeclaredConstructor().newInstance();
 		}
 		catch (Exception e)
 		{
@@ -410,7 +407,7 @@ public class ReflectionUtil
 	{
 		for (Class<?> superClazz : getSuperclasses(clazz, includeSelf))
 		{
-			if (predicate.apply(superClazz)) return superClazz;
+			if (predicate.test(superClazz)) return superClazz;
 		}
 		return null;
 	}
@@ -420,7 +417,7 @@ public class ReflectionUtil
 		return getSuperclassPredicate(clazz, includeSelf, new Predicate<Class<?>>()
 		{
 			@Override
-			public boolean apply(Class<?> clazz)
+			public boolean test(Class<?> clazz)
 			{
 				for (Method method : clazz.getDeclaredMethods())
 				{
@@ -436,7 +433,7 @@ public class ReflectionUtil
 		return getSuperclassPredicate(clazz, includeSelf, new Predicate<Class<?>>()
 		{
 			@Override
-			public boolean apply(Class<?> clazz)
+			public boolean test(Class<?> clazz)
 			{
 				for (Field field : clazz.getDeclaredFields())
 				{
@@ -452,7 +449,7 @@ public class ReflectionUtil
 	// -------------------------------------------- //
 
 	@SuppressWarnings("unchecked")
-	public static List<Class<?>> getPackageClasses(String packageName, ClassLoader classLoader, boolean recursive, Predicate<Class<?>>... predicates)
+	public static List<Class<?>> getPackageClasses(String packageName, ClassLoader classLoader, boolean recursive, java.util.function.Predicate<Class<?>>... predicates)
 	{
 		// Create ret
 		List<Class<?>> ret = new MassiveList<>();
@@ -461,11 +458,11 @@ public class ReflectionUtil
 		{
 			// Get info
 			ClassPath classPath = ClassPath.from(classLoader);
-			Predicate<Class<?>> predicateCombined = PredicateAnd.get(predicates);
+			Predicate<Class<?>> predicateCombined = MUtil.predicatesAnd(predicates);
 
-			Collection<ClassInfo> classInfos = recursive ? classPath.getTopLevelClassesRecursive(packageName) : classPath.getTopLevelClasses(packageName);
+			Collection<ClassPath.ClassInfo> classInfos = recursive ? classPath.getTopLevelClassesRecursive(packageName) : classPath.getTopLevelClasses(packageName);
 
-			for (ClassInfo classInfo : classInfos)
+			for (ClassPath.ClassInfo classInfo : classInfos)
 			{
 				// Get name of class
 				String className = classInfo.getName();
@@ -488,7 +485,7 @@ public class ReflectionUtil
 				}
 
 				// And it must not be ignored
-				if (!predicateCombined.apply(clazz)) continue;
+				if (!predicateCombined.test(clazz)) continue;
 
 				ret.add(clazz);
 			}

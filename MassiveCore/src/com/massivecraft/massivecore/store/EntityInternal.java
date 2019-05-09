@@ -1,10 +1,10 @@
 package com.massivecraft.massivecore.store;
 
+import com.google.gson.Gson;
 import com.massivecraft.massivecore.Identified;
 import com.massivecraft.massivecore.MassiveCore;
 import com.massivecraft.massivecore.store.accessor.Accessor;
 import com.massivecraft.massivecore.util.MUtil;
-import com.massivecraft.massivecore.xlib.gson.Gson;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
@@ -38,6 +38,12 @@ public class EntityInternal<E extends EntityInternal<E>> implements Identified
 	public String getId()
 	{
 		return this.id;
+	}
+	public String getIdOrThrow()
+	{
+		String id = this.getId();
+		if (id == null) throw new NullPointerException("id");
+		return id;
 	}
 	
 	// -------------------------------------------- //
@@ -73,7 +79,16 @@ public class EntityInternal<E extends EntityInternal<E>> implements Identified
 	{
 		
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	public E detach()
+	{
+		EntityContainer<E> coll = this.getContainer();
+		if (coll == null) return (E)this;
+
+		return coll.detachEntity((E) this);
+	}
+
 	// -------------------------------------------- //
 	// SYNC AND IO ACTIONS
 	// -------------------------------------------- //
