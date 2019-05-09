@@ -7,13 +7,13 @@ import com.massivecraft.massivecore.command.type.Type;
 import com.massivecraft.massivecore.command.type.primitive.TypeDouble;
 import com.massivecraft.massivecore.util.Txt;
 
-public abstract class CmdFactionsPowerboostAbstract extends FactionsCommand
+public abstract class CmdFactionsPowerBoostAbstract extends FactionsCommand
 {
 	// -------------------------------------------- //
 	// CONSTRUCT
 	// -------------------------------------------- //
 	
-	protected CmdFactionsPowerboostAbstract(Type<? extends FactionsParticipator> parameterType, String parameterName)
+	protected CmdFactionsPowerBoostAbstract(Type<? extends FactionsParticipator> parameterType, String parameterName)
 	{
 		// Parameters
 		this.addParameter(parameterType, parameterName);

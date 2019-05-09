@@ -1,19 +1,19 @@
 package com.massivecraft.factions.cmd;
 
-public class CmdFactionsPowerboost extends FactionsCommand
+public class CmdFactionsPowerBoost extends FactionsCommand
 {
 	// -------------------------------------------- //
 	// FIELDS
 	// -------------------------------------------- //
 	
-	public CmdFactionsPowerboostPlayer cmdFactionsPowerBoostPlayer = new CmdFactionsPowerboostPlayer();
-	public CmdFactionsPowerboostFaction cmdFactionsPowerBoostFaction = new CmdFactionsPowerboostFaction();
+	public CmdFactionsPowerBoostPlayer cmdFactionsPowerBoostPlayer = new CmdFactionsPowerBoostPlayer();
+	public CmdFactionsPowerBoostFaction cmdFactionsPowerBoostFaction = new CmdFactionsPowerBoostFaction();
 	
 	// -------------------------------------------- //
 	// CONSTRUCT
 	// -------------------------------------------- //
 	
-	public CmdFactionsPowerboost()
+	public CmdFactionsPowerBoost()
 	{
 		// Child
 		this.addChild(this.cmdFactionsPowerBoostPlayer);

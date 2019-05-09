@@ -1,6 +1,6 @@
 package com.massivecraft.factions.cmd;
 
-public class CmdFactionsPowerboostFactionMultiply extends CmdFactionsPowerboostFactionAbstract
+public class CmdFactionsPowerBoostPlayerMultiply extends CmdFactionsPowerBoostPlayerAbstract
 {
 	// -------------------------------------------- //
 	// OVERRIDE

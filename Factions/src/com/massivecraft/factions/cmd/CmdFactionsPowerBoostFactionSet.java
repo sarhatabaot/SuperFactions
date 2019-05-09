@@ -1,6 +1,6 @@
 package com.massivecraft.factions.cmd;
 
-public class CmdFactionsPowerboostFactionSet extends CmdFactionsPowerboostFactionAbstract
+public class CmdFactionsPowerBoostFactionSet extends CmdFactionsPowerBoostFactionAbstract
 {
 	// -------------------------------------------- //
 	// OVERRIDE

@@ -1,6 +1,6 @@
 package com.massivecraft.factions.cmd;
 
-public class CmdFactionsPowerboostPlayerAdd extends CmdFactionsPowerboostPlayerAbstract
+public class CmdFactionsPowerBoostFactionMultiply extends CmdFactionsPowerBoostFactionAbstract
 {
 	// -------------------------------------------- //
 	// OVERRIDE
@@ -9,7 +9,7 @@ public class CmdFactionsPowerboostPlayerAdd extends CmdFactionsPowerboostPlayerA
 	@Override
 	public double calcNewPowerboost(double current, double d)
 	{
-		return current + d;
+		return current * d;
 	}
 
 }
