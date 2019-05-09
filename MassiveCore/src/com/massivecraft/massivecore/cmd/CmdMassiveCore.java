@@ -1,7 +1,7 @@
 package com.massivecraft.massivecore.cmd;
 
 import com.massivecraft.massivecore.MassiveCore;
-import com.massivecraft.massivecore.MassiveCoreMConf;
+import com.massivecraft.massivecore.entity.MassiveCoreMConf;
 import com.massivecraft.massivecore.MassiveCorePerm;
 import com.massivecraft.massivecore.command.MassiveCommandVersion;
 import com.massivecraft.massivecore.command.editor.CommandEditAbstract;
@@ -31,9 +31,8 @@ public class CmdMassiveCore extends MassiveCoreCommand
 	public CmdMassiveCoreBuffer cmdMassiveCoreBuffer = new CmdMassiveCoreBuffer();
 	public CmdMassiveCoreCmdurl cmdMassiveCoreCmdurl = new CmdMassiveCoreCmdurl();
 	public CommandEditAbstract<MassiveCoreMConf, MassiveCoreMConf> cmdMassiveCoreConfig = new CommandEditSingleton<>(MassiveCoreMConf.get()).addRequirements(RequirementHasPerm.get(MassiveCorePerm.CONFIG));
-	public CmdMassiveCoreSponsor cmdMassiveCoreSponsor = new CmdMassiveCoreSponsor();
 	public CmdMassiveCoreClick cmdMassiveCoreClick = new CmdMassiveCoreClick();
-	public MassiveCommandVersion cmdMassiveCoreVersion = new MassiveCommandVersion(MassiveCore.get()).setAliases("v", "version").addRequirements(RequirementHasPerm.get(MassiveCorePerm.VERSION));
+	public MassiveCommandVersion cmdMassiveCoreVersion = new MassiveCommandVersion(MassiveCore.get()).addRequirements(RequirementHasPerm.get(MassiveCorePerm.VERSION));
 	
 	// -------------------------------------------- //
 	// OVERRIDE

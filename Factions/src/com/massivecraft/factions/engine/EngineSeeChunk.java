@@ -1,14 +1,14 @@
 package com.massivecraft.factions.engine;
 
-import com.massivecraft.factions.entity.MConf;
 import com.massivecraft.factions.entity.MPlayer;
 import com.massivecraft.massivecore.Engine;
 import com.massivecraft.massivecore.event.EventMassiveCorePlayerLeave;
-import com.massivecraft.massivecore.particleeffect.ParticleEffect;
 import com.massivecraft.massivecore.ps.PS;
 import com.massivecraft.massivecore.util.MUtil;
 import com.massivecraft.massivecore.util.PeriodUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -67,25 +67,25 @@ public class EngineSeeChunk extends Engine
 	{
 		// Do we have a new period?
 		final long now = System.currentTimeMillis();
-		final long length = MConf.get().seeChunkPeriodMillis;
+		final long length = 500;
 		if ( ! PeriodUtil.isNewPeriod(this, length, now)) return;
 		
 		// Get the period number
 		final long period = PeriodUtil.getPeriod(length, now);
 		
 		// Calculate the "step" from the period number
-		final int steps = MConf.get().seeChunkSteps; // Example: 4
+		final int steps = 1; // Example: 4
 		final int step = (int) (period % steps); // Example: 0, 1, 2, 3
 		
 		// Load other related config options
 		final float offsetX = 0.0f;
-		final float offsetY = MConf.get().seeChunkParticleOffsetY;
+		final float offsetY = 2;
 		final float offsetZ = 0.0f;
 		final float speed = 0;
-		final int amount = MConf.get().seeChunkParticleAmount;
+		final int amount = 30;
 		
 		// For each player
-		for (Player player : MUtil.getOnlinePlayers())
+		for (Player player : Bukkit.getOnlinePlayers())
 		{
 			// Hide for dead players since the death screen looks better without.
 			if (player.isDead()) continue;
@@ -98,7 +98,8 @@ public class EngineSeeChunk extends Engine
 			List<Location> locations = getLocations(player, steps, step);
 			for (Location location : locations)
 			{
-				ParticleEffect.EXPLOSION_NORMAL.display(location, offsetX, offsetY, offsetZ, speed, amount, player);
+				location.getWorld().spawnParticle(Particle.EXPLOSION_NORMAL, location, amount, offsetX, offsetY, offsetZ, speed);
+				//ParticleEffect.EXPLOSION_NORMAL.display(location, offsetX, offsetY, offsetZ, speed, amount, player);
 			}
 		}
 	}
@@ -120,14 +121,14 @@ public class EngineSeeChunk extends Engine
 		
 		final int xmin = chunk.getChunkX() * 16;
 		final int xmax = xmin + 15;
-		final double y = location.getBlockY() + MConf.get().seeChunkParticleDeltaY;
+		final double y = location.getBlockY() + 2;
 		final int zmin = chunk.getChunkZ() * 16;
 		final int zmax = zmin + 15;
 		
-		int keepEvery = MConf.get().seeChunkKeepEvery;
+		int keepEvery = 5;
 		if (keepEvery <= 0) keepEvery = Integer.MAX_VALUE;
 		
-		int skipEvery = MConf.get().seeChunkSkipEvery;
+		int skipEvery = 0;
 		if (skipEvery <= 0) skipEvery = Integer.MAX_VALUE;
 		
 		int x = xmin;

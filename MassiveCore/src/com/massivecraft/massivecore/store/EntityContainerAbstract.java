@@ -1,8 +1,6 @@
 package com.massivecraft.massivecore.store;
 
 import com.massivecraft.massivecore.Named;
-import com.massivecraft.massivecore.predicate.Predicate;
-import com.massivecraft.massivecore.predicate.PredicateEqualsIgnoreCase;
 import com.massivecraft.massivecore.util.MUtil;
 
 import java.util.ArrayList;
@@ -11,6 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 // Calls fixId when necessary
 public abstract class EntityContainerAbstract<E extends EntityInternal<E>> implements EntityContainer<E>
@@ -24,7 +23,7 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	@Override
 	public String fixId(Object oid)
 	{
-		if (oid == null) return null;
+		if (oid == null) throw new NullPointerException("oid");
 		
 		String ret = null;
 		if (oid instanceof String) ret = (String) oid;
@@ -45,29 +44,33 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	@Override
 	public E get(Object oid)
 	{
+		if (oid == null) throw new NullPointerException("oid");
 		return this.getFixed(this.fixId(oid));
 	}
 	
 	@Override
 	public E get(Object oid, boolean creative)
 	{
+		if (oid == null) throw new NullPointerException("oid");
 		return this.getFixed(this.fixId(oid), creative);
 	}
 	
 	@Override 
 	public E getFixed(String id) 
 	{
+		if (id == null) throw new NullPointerException("id");
 		return this.getFixed(id, this.isCreative());
 	}
 	
 	@Override
 	public E getFixed(String id, boolean creative)
 	{
+		if (id == null) throw new NullPointerException("id");
 		return this.getFixed(id, creative, true);
 	}
 	protected E getFixed(String id, boolean creative, boolean noteModification)
 	{
-		if (id == null) return null;
+		if (id == null) throw new NullPointerException("id");
 		E ret = this.getIdToEntity().get(id);
 		if (ret != null) return ret;
 		if ( ! creative) return null;
@@ -79,19 +82,21 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	@Override
 	public boolean containsId(Object oid)
 	{
+		if (oid == null) throw new NullPointerException("oid");
 		return this.containsIdFixed(this.fixId(oid));
 	}
 	
 	@Override
 	public boolean containsIdFixed(String id)
 	{
-		if (id == null) return false;
+		if (id == null) throw new NullPointerException("id");
 		return this.getIdToEntity().containsKey(id);
 	}
 	
 	@Override
 	public boolean containsEntity(Object entity)
 	{
+		if (entity == null) throw new NullPointerException("entity");
 		return this.getIdToEntity().containsValue(entity);
 	}
 	
@@ -116,7 +121,6 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	{
 		// Return Create
 		List<E> ret = new ArrayList<>();
-		
 		// Return Fill
 		for (Object oid : oids)
 		{
@@ -140,6 +144,21 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	@Override public List<E> getAll(Comparator<? super E> orderby) { return MUtil.transform(this.getAll(), orderby); }
 	@Override public List<E> getAll(Integer limit, Integer offset) { return MUtil.transform(this.getAll(), limit, offset); }
 	@Override public List<E> getAll(Integer limit) { return MUtil.transform(this.getAll(), limit); }
+
+	// OLD PREDICATE
+	@Deprecated @Override public List<E> getAll(Iterable<?> oids, com.massivecraft.massivecore.predicate.Predicate<? super E> where, Comparator<? super E> orderby, Integer limit, Integer offset) { return MUtil.transform(this.getAll(oids), where, orderby, limit, offset); }
+	@Deprecated @Override public List<E> getAll(Iterable<?> oids, com.massivecraft.massivecore.predicate.Predicate<? super E> where, Comparator<? super E> orderby, Integer limit) { return MUtil.transform(this.getAll(oids), where, orderby, limit); }
+	@Deprecated @Override public List<E> getAll(Iterable<?> oids, com.massivecraft.massivecore.predicate.Predicate<? super E> where, Comparator<? super E> orderby) { return MUtil.transform(this.getAll(oids), where, orderby); }
+	@Deprecated @Override public List<E> getAll(Iterable<?> oids, com.massivecraft.massivecore.predicate.Predicate<? super E> where, Integer limit, Integer offset) { return MUtil.transform(this.getAll(oids), where, limit, offset); }
+	@Deprecated @Override public List<E> getAll(Iterable<?> oids, com.massivecraft.massivecore.predicate.Predicate<? super E> where, Integer limit) { return MUtil.transform(this.getAll(oids), where, limit); }
+	@Deprecated @Override public List<E> getAll(Iterable<?> oids, com.massivecraft.massivecore.predicate.Predicate<? super E> where) { return MUtil.transform(this.getAll(oids), where); }
+
+	@Deprecated @Override public List<E> getAll(com.massivecraft.massivecore.predicate.Predicate<? super E> where, Comparator<? super E> orderby, Integer limit, Integer offset) { return MUtil.transform(this.getAll(), where, orderby, limit, offset); }
+	@Deprecated @Override public List<E> getAll(com.massivecraft.massivecore.predicate.Predicate<? super E> where, Comparator<? super E> orderby, Integer limit) { return MUtil.transform(this.getAll(), where, orderby, limit); }
+	@Deprecated @Override public List<E> getAll(com.massivecraft.massivecore.predicate.Predicate<? super E> where, Comparator<? super E> orderby) { return MUtil.transform(this.getAll(), where, orderby); }
+	@Deprecated @Override public List<E> getAll(com.massivecraft.massivecore.predicate.Predicate<? super E> where, Integer limit, Integer offset) { return MUtil.transform(this.getAll(), where, limit, offset); }
+	@Deprecated @Override public List<E> getAll(com.massivecraft.massivecore.predicate.Predicate<? super E> where, Integer limit) { return MUtil.transform(this.getAll(), where, limit); }
+	@Deprecated @Override public List<E> getAll(com.massivecraft.massivecore.predicate.Predicate<? super E> where) { return MUtil.transform(this.getAll(), where); }
 	
 	// -------------------------------------------- //
 	// BEHAVIOR
@@ -195,7 +214,7 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	{
 		try
 		{
-			return this.getEntityClass().newInstance();
+			return this.getEntityClass().getDeclaredConstructor().newInstance();
 		}
 		catch (Exception e)
 		{
@@ -238,8 +257,8 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	protected synchronized String attach(E entity, Object oid, boolean noteModification)
 	{
 		// Check entity
-		if (entity == null) return null;
-		if (entity.attached()) return entity.getId();
+		if (entity == null) throw new NullPointerException("entity");
+		if (entity.attached()) throw new IllegalArgumentException("already attached");
 		
 		String id;
 		// Check/Fix id
@@ -253,7 +272,7 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 			if (id == null) return null;
 			if (this.getIdToEntity().containsKey(id)) return null;
 		}
-		
+
 		// PRE
 		this.preAttach(entity, id);
 		
@@ -263,7 +282,6 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 		
 		// Attach
 		this.getIdToEntityRaw().put(id, entity);
-		
 		// Identify Modification
 		if (noteModification)
 		{
@@ -393,7 +411,7 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 	{
 		if (name == null) throw new NullPointerException("name");
 		
-		Predicate<String> predicate = PredicateEqualsIgnoreCase.get(name);
+		java.util.function.Predicate<String> predicate = name::equalsIgnoreCase;
 		for (E entity : this.getAll())
 		{
 			if (entity == null) continue;
@@ -401,7 +419,7 @@ public abstract class EntityContainerAbstract<E extends EntityInternal<E>> imple
 			if ( ! (entity instanceof Named)) continue;
 			Named named = (Named)entity;
 			
-			if (predicate.apply(named.getName())) return entity;
+			if (predicate.test(named.getName())) return entity;
 		}
 		
 		return null;

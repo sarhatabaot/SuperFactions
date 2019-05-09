@@ -14,7 +14,6 @@ import com.massivecraft.massivecore.command.type.Type;
 import com.massivecraft.massivecore.command.type.enumeration.TypeEnum;
 import com.massivecraft.massivecore.mixin.MixinMessage;
 import com.massivecraft.massivecore.mson.Mson;
-import com.massivecraft.massivecore.predicate.Predicate;
 import com.massivecraft.massivecore.predicate.PredicateLevenshteinClose;
 import com.massivecraft.massivecore.predicate.PredicateStartsWithIgnoreCase;
 import com.massivecraft.massivecore.util.MUtil;
@@ -193,7 +192,7 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 	// === SETUP ===
 
 	// Determines whether the smart setup process will be used, works for most of commands
-	protected boolean setupEnabled = false;
+	protected boolean setupEnabled = true;
 
 	// A base prefix such as "CmdFactions" that all names of commands in a plugin start with.
 	// Used for finding the right permission.
@@ -412,7 +411,7 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 		
 		// Prepare
 		token = token.toLowerCase();
-		Predicate<String> predicate = levenshtein ? PredicateLevenshteinClose.get(token) : PredicateStartsWithIgnoreCase.get(token);
+		java.util.function.Predicate<String> predicate = levenshtein ? PredicateLevenshteinClose.get(token) : PredicateStartsWithIgnoreCase.get(token);
 		
 		// Fill Ret
 		// Go through each child command
@@ -431,7 +430,7 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 				if (ret.contains(child)) continue;
 				
 				// ... matches ...
-				if (!predicate.apply(alias)) continue;
+				if (!predicate.test(alias)) continue;
 				
 				// ... and put in ret.
 				ret.add(child);
@@ -982,6 +981,8 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 
 	public void setupAddChildren()
 	{
+		if (this instanceof MassiveCommandDeprecated) return;
+
 		for (Field field : this.getClassOrEnclosing(this).getDeclaredFields())
 		{
 			ReflectionUtil.makeAccessible(field);
@@ -989,7 +990,6 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 
 			if (!MassiveCommand.class.isAssignableFrom(fieldType)) continue;
 			if (Modifier.isStatic(field.getModifiers())) continue;
-
 			MassiveCommand child = ReflectionUtil.getField(field, this);
 			this.addChild(child);
 		}
@@ -997,13 +997,12 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 
 	public void setupChildren()
 	{
-		for (MassiveCommand child : this.getChildren())
-		{
-			if (child.isSetupEnabled()) child.setup();
-		}
+		this.getChildren().stream()
+			.filter(MassiveCommand::isSetupEnabled)
+			.forEach(MassiveCommand::setup);
 	}
 	
-	private Class<?> getClassOrEnclosing(Object object)
+	private static Class<?> getClassOrEnclosing(Object object)
 	{
 		Class<?> clazz =  object.getClass();
 		Class<?> enclosingClass = clazz.getEnclosingClass();
@@ -1016,11 +1015,14 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 		if (this.isRoot()) return null;
 
 		// ... get name of parent ...
-		String parentName = this.getClassOrEnclosing(this.getParent()).getSimpleName();
+		String parentName = getClassOrEnclosing(this.getParent()).getSimpleName();
 
 		// ... and only try if the names match ...
 		String name = this.getClass().getSimpleName();
-		if ( ! name.startsWith(parentName)) return null;
+		if ( ! name.startsWith(parentName))
+		{
+			return null;
+		}
 
 		// ... and without parent prefix ...
 		String ret = name.substring(parentName.length());
@@ -1031,16 +1033,13 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 		return ret;
 	}
 
-	protected <T extends Enum<T>> T calcPerm()
+	protected Object calcPerm()
 	{
-		Class<T> permClass = this.getSetupPermClass();
+		Class<? extends Enum<?>> permClass = this.getSetupPermClass();
 		String basePrefix = this.getSetupPermBaseClassName();
 
-		if (permClass == null) return null;
-		if (basePrefix == null) return null;
-
 		// Only try if the name matches with the expected prefix ...
-		String name = getClassOrEnclosing(this).getSimpleName(); //this.getClass().getSimpleName();
+		String name = getClassOrEnclosing(this).getSimpleName();
 		if ( ! name.startsWith(basePrefix)) return null;
 
 		// ... and remove the prefix  ...
@@ -1056,7 +1055,7 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 		if (permName.isEmpty()) permName = "BASECOMMAND";
 
 		// Create ret
-		T ret = null;
+		Object ret = null;
 
 		// Try non-lenient
 		ret = getPerm(permName, false, permClass);
@@ -1066,11 +1065,13 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 		ret = getPerm(permName, true, permClass);
 		if (ret != null) return ret;
 
-		throw new RuntimeException("Could not find permission matching: " + permName);
+		// Or calculate ourselves
+		return PermissionUtil.createPermissionId(this.getRoot().getPlugin(), permName);
 	}
 
-	protected static <T extends Enum<T>> T getPerm(String permName, boolean lenient, Class<T> permClass)
+	protected static <T extends Enum<T>> T getPerm(String permName, boolean lenient, Class<?> permClazz)
 	{
+		Class<T> permClass = (Class<T>) permClazz;
 		permName = getPermCompareString(permName, lenient);
 		for (T perm : TypeEnum.getEnumValues(permClass))
 		{
@@ -1263,41 +1264,10 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 	
 	public Mson getTemplate(boolean addDesc, boolean onlyFirstAlias, CommandSender sender)
 	{
-		// Create Ret
-		Mson ret = TEMPLATE_CORE;
-		
-		// Get commands
-		List<MassiveCommand> commands = this.getChain(true);
-		
-		// Add commands
-		boolean first = true;
-		for (MassiveCommand command : commands)
-		{
-			Mson mson = null;
-			
-			if (first && onlyFirstAlias)
-			{
-				mson = mson(command.getAliases().get(0));
-			}
-			else
-			{
-				mson = mson(Txt.implode(command.getAliases(), ","));
-			}
-			
-			if (sender != null && ! command.isRequirementsMet(sender, false))
-			{
-				mson = mson.color(ChatColor.RED);
-			}
-			else
-			{
-				mson = mson.color(ChatColor.AQUA);
-			}
-			
-			if ( ! first) ret = ret.add(Mson.SPACE);
-			ret = ret.add(mson); 
-			first = false;
-		}
+		// Get base
+		Mson ret = this.getTemplateChain(onlyFirstAlias, sender);
 
+		List<MassiveCommand> commands = this.getChain(true);
 		// Check if last command is parentCommand and make command suggestable/clickable
 		if (commands.get(commands.size() - 1).isParent())
 		{
@@ -1323,6 +1293,62 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 		}
 		
 		// Return Ret
+		return ret;
+	}
+
+	public Mson getTemplateWithArgs(CommandSender sender, String... args)
+	{
+		return this.getTemplateWithArgs(sender, MUtil.list(args));
+	}
+
+	public Mson getTemplateWithArgs(CommandSender sender, List<String> args)
+	{
+		Mson ret = this.getTemplateChain(true, sender);
+
+		for (String arg : args)
+		{
+			ret = ret.add(Mson.SPACE);
+			ret = ret.add(mson(arg).color(ChatColor.DARK_AQUA));
+		}
+
+		return ret;
+	}
+
+	public Mson getTemplateChain(boolean onlyFirstAlias, CommandSender sender)
+	{
+		Mson ret = TEMPLATE_CORE;
+
+		List<MassiveCommand> commands = this.getChain(true);
+
+		// Add commands
+		boolean first = true;
+		for (MassiveCommand command : commands)
+		{
+			Mson mson = null;
+
+			if (first && onlyFirstAlias)
+			{
+				mson = mson(command.getAliases().get(0));
+			}
+			else
+			{
+				mson = mson(Txt.implode(command.getAliases(), ","));
+			}
+
+			if (sender != null && ! command.isRequirementsMet(sender, false))
+			{
+				mson = mson.color(ChatColor.RED);
+			}
+			else
+			{
+				mson = mson.color(ChatColor.AQUA);
+			}
+
+			if ( ! first) ret = ret.add(Mson.SPACE);
+			ret = ret.add(mson);
+			first = false;
+		}
+
 		return ret;
 	}
 	
@@ -1624,29 +1650,6 @@ public class MassiveCommand implements Active, PluginIdentifiableCommand
 
 		// Increment is done in this method
 		return readArgAt(idx);
-	}
-
-	// TODO: Some of these are still used by external plugins.
-	// TODO: Fix those plugins.
-
-	@Deprecated
-	public <T> T readArgFrom(Type<T> type) throws MassiveException
-	{
-		return this.readArgFrom(null, type);
-	}
-
-	@Deprecated
-	public <T> T readArgFrom(String str, Type<T> type) throws MassiveException
-	{
-		if (type == null) throw new IllegalArgumentException("type is null");
-		return type.read(str, this.sender);
-	}
-
-	@Deprecated
-	public <T> T readArgFrom(String str, Type<T> type, T defaultNotSet) throws MassiveException
-	{
-		if (str == null) return defaultNotSet;
-		return this.readArgFrom(str, type);
 	}
 	
 }

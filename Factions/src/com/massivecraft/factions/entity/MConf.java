@@ -20,8 +20,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventPriority;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +59,7 @@ public class MConf extends Entity<MConf>
 	// VERSION
 	// -------------------------------------------- //
 	
-	public int version = 3;
+	public int version = 5;
 	
 	// -------------------------------------------- //
 	// COMMAND ALIASES
@@ -98,7 +96,6 @@ public class MConf extends Entity<MConf>
 	
 	// Define the time in minutes between certain Factions system tasks is ran.
 	public double taskPlayerPowerUpdateMinutes = 1;
-	public double taskPlayerDataRemoveMinutes = 5;
 	public double taskEconLandRewardMinutes = 20;
 	
 	// -------------------------------------------- //
@@ -134,10 +131,6 @@ public class MConf extends Entity<MConf>
 	// Which faction should new players be followers of?
 	// "none" means Wilderness. Remember to specify the id, like "3defeec7-b3b1-48d9-82bb-2a8903df24e3" and not the name.
 	public String defaultPlayerFactionId = Factions.ID_NONE;
-	
-	// What rank should new players joining a faction get?
-	// If not RECRUIT then MEMBER might make sense.
-	public Rel defaultPlayerRole = Rel.RECRUIT;
 	
 	// What power should the player start with?
 	public double defaultPlayerPower = 0.0;
@@ -193,12 +186,7 @@ public class MConf extends Entity<MConf>
 	// Limit the length of faction names here.
 	public int factionNameLengthMin = 3;
 	public int factionNameLengthMax = 16;
-	
-	// Should faction names automatically be converted to upper case?
-	// You probably don't want this feature.
-	// It's a remnant from old faction versions.
-	public boolean factionNameForceUpperCase = false;
-	
+
 	// -------------------------------------------- //
 	// SET LIMITS
 	// -------------------------------------------- //
@@ -255,33 +243,35 @@ public class MConf extends Entity<MConf>
 	// HOMES
 	// -------------------------------------------- //
 	
-	// Is the home feature enabled?
-	// If you set this to false players can't set homes or teleport home.
-	public boolean homesEnabled = true;
-	
-	// Must homes be located inside the faction's territory?
+	// Is the warps feature enabled?
+	// If you set this to false players can't set warps or teleport to a warp.
+	public boolean warpsEnabled = true;
+
+	// How many warps can they have?
+	public int warpsMax = 1;
+
+	// Must warps be located inside the faction's territory?
 	// It's usually a wise idea keeping this true.
-	// Otherwise players can set their homes inside enemy territory.
-	public boolean homesMustBeInClaimedTerritory = true;
+	// Otherwise players can set their warps inside enemy territory.
+	public boolean warpsMustBeInClaimedTerritory = true;
 	
-	// Is the home teleport command available?
-	// One reason you might set this to false is if you only want players going home on respawn after death.
-	public boolean homesTeleportCommandEnabled = true;
+	// These options can be used to limit rights to warp under different circumstances.
+	public boolean warpsTeleportAllowedFromEnemyTerritory = true;
+	public boolean warpsTeleportAllowedFromDifferentWorld = true;
+	public double warpsTeleportAllowedEnemyDistance = 32.0;
+	public boolean warpsTeleportIgnoreEnemiesIfInOwnTerritory = true;
 	
-	// These options can be used to limit rights to tp home under different circumstances.
-	public boolean homesTeleportAllowedFromEnemyTerritory = true;
-	public boolean homesTeleportAllowedFromDifferentWorld = true;
-	public double homesTeleportAllowedEnemyDistance = 32.0;
-	public boolean homesTeleportIgnoreEnemiesIfInOwnTerritory = true;
-	
-	// Should players teleport to faction home on death?
+	// Should players teleport to faction warp on death?
 	// Set this to true to override the default respawn location.
-	public boolean homesTeleportToOnDeathActive = false;
+	public boolean warpsTeleportToOnDeathActive = false;
+
+	// And waht faction warp should it be? It must have a specific name.
+	public String warpsTeleportToOnDeathName = "home";
 	
 	// This value can be used to tweak compatibility with other plugins altering the respawn location.
 	// Choose between: LOWEST, LOW, NORMAL, HIGH, HIGHEST and MONITOR.
-	public EventPriority homesTeleportToOnDeathPriority = EventPriority.NORMAL;
-	
+	public EventPriority warpsTeleportToOnDeathPriority = EventPriority.NORMAL;
+
 	// -------------------------------------------- //
 	// TERRITORY INFO
 	// -------------------------------------------- //
@@ -328,6 +318,12 @@ public class MConf extends Entity<MConf>
 	// Protects the faction land from piston extending/retracting
 	// through the denying of MPerm build
 	public boolean handlePistonProtectionThroughDenyBuild = true;
+
+	// Make faction disbanding a confirmation thing
+	public boolean requireConfirmationForFactionDisbanding = true;
+
+	// At what speed can players fly with /f fly?
+	public float flySpeed = 0.1f;
 	
 	// -------------------------------------------- //
 	// DENY COMMANDS
@@ -397,7 +393,7 @@ public class MConf extends Entity<MConf>
 		Rel.NEUTRAL, new ArrayList<String>(),
 		Rel.TRUCE, new ArrayList<String>(),
 		Rel.ALLY, new ArrayList<String>(),
-		Rel.MEMBER, new ArrayList<String>()
+		Rel.FACTION, new ArrayList<String>()
 	);
 	
 	// The distance for denying the following commands. Set to -1 to disable.
@@ -411,12 +407,12 @@ public class MConf extends Entity<MConf>
 		Rel.NEUTRAL, new ArrayList<String>(),
 		Rel.TRUCE, new ArrayList<String>(),
 		Rel.ALLY, new ArrayList<String>(),
-		Rel.MEMBER, new ArrayList<String>()
+		Rel.FACTION, new ArrayList<String>()
 	);
 	
 	// Allow bypassing the above setting when in these territories.
 	public List<Rel> denyCommandsDistanceBypassIn = MUtil.list(
-		Rel.MEMBER,
+		Rel.FACTION,
 		Rel.ALLY
 	);
 	
@@ -463,45 +459,14 @@ public class MConf extends Entity<MConf>
 	
 	// This one is for example applied to WarZone since that faction has the friendly fire flag set to true.
 	public ChatColor colorFriendlyFire = ChatColor.DARK_RED;
-	
-	// -------------------------------------------- //
-	// PREFIXES
-	// -------------------------------------------- //
-	
-	// Here you may edit the name prefixes associated with different faction ranks.
-	public String prefixLeader = "**";
-	public String prefixOfficer = "*";
-	public String prefixMember = "+";
-	public String prefixRecruit = "-";
-	
+
 	// -------------------------------------------- //
 	// EXPLOITS
 	// -------------------------------------------- //
 	
 	public boolean handleExploitObsidianGenerators = true;
 	public boolean handleExploitEnderPearlClipping = true;
-	public boolean handleExploitTNTWaterlog = false;
 	public boolean handleNetherPortalTrap = true;
-	
-	// -------------------------------------------- //
-	// SEE CHUNK
-	// -------------------------------------------- //
-	
-	// These options can be used to tweak the "/f seechunk" particle effect.
-	// They are fine as is but feel free to experiment with them if you want to.
-	
-	// Use 1 or multiple of 3, 4 or 5.
-	public int seeChunkSteps = 1;
-	
-	// White/Black List for creating sparse patterns.
-	public int seeChunkKeepEvery = 5;
-	public int seeChunkSkipEvery = 0;
-	
-	@EditorType(TypeMillisDiff.class)
-	public long seeChunkPeriodMillis = 500;
-	public int seeChunkParticleAmount = 30;
-	public float seeChunkParticleOffsetY = 2;
-	public float seeChunkParticleDeltaY = 2;
 	
 	// -------------------------------------------- //
 	// UNSTUCK
@@ -560,40 +525,7 @@ public class MConf extends Entity<MConf>
 	
 	// List of entities considered to be animals.
 	public BackstringSet<EntityType> entityTypesAnimals = new BackstringSet<>(EntityType.class);
-	
-	// -------------------------------------------- //
-	// INTEGRATION: HeroChat
-	// -------------------------------------------- //
-	
-	// I you are using the chat plugin HeroChat Factions ship with built in integration.
-	// The two channels Faction and Allies will be created.
-	// Their data is actually stored right here in the factions config.
-	// NOTE: HeroChat will create it's own database files for these two channels.
-	// You should ignore those and edit the channel settings from here.
-	// Those HeroChat channel database files aren't read for the Faction and Allies channels.
-	
-	// The Faction Channel
-	public String herochatFactionName = "Faction";
-	public String herochatFactionNick = "F";
-	public String herochatFactionFormat = "{color}[&l{nick}&r{color} &l{factions_roleprefix}&r{color}{factions_title|rp}{sender}{color}] &f{msg}";
-	public ChatColor herochatFactionColor = ChatColor.GREEN;
-	public int herochatFactionDistance = 0;
-	public boolean herochatFactionIsShortcutAllowed = false;
-	public boolean herochatFactionCrossWorld = true;
-	public boolean herochatFactionMuted = false;
-	public Set<String> herochatFactionWorlds = new HashSet<>();
-	
-	// The Allies Channel
-	public String herochatAlliesName = "Allies";
-	public String herochatAlliesNick = "A";
-	public String herochatAlliesFormat = "{color}[&l{nick}&r&f {factions_relcolor}&l{factions_roleprefix}&r{factions_relcolor}{factions_name|rp}{sender}{color}] &f{msg}";
-	public ChatColor herochatAlliesColor = ChatColor.DARK_PURPLE;
-	public int herochatAlliesDistance = 0;
-	public boolean herochatAlliesIsShortcutAllowed = false;
-	public boolean herochatAlliesCrossWorld = true;
-	public boolean herochatAlliesMuted = false;
-	public Set<String> herochatAlliesWorlds = new HashSet<>();
-	
+
 	// -------------------------------------------- //
 	// INTEGRATION: LWC
 	// -------------------------------------------- //
@@ -626,7 +558,15 @@ public class MConf extends Entity<MConf>
 	// Enable the WorldGuard check per-world 
 	// Specify which worlds the WorldGuard Check can be used in
 	public WorldExceptionSet worldguardCheckWorldsEnabled = new WorldExceptionSet();
-	
+
+	// -------------------------------------------- //
+	// INTEGRATION: VentureChat
+	// -------------------------------------------- //
+
+	public String ventureChatFactionChannelName = "faction";
+	public String ventureChatAllyChannelName = "ally";
+	public boolean ventureChatAllowFactionchatBetweenFactionless = false;
+
 	// -------------------------------------------- //
 	// INTEGRATION: ECONOMY
 	// -------------------------------------------- //
@@ -655,13 +595,16 @@ public class MConf extends Entity<MConf>
 	public double econCostCreate = 100.0;
 	
 	// And so on and so forth ... you get the idea.
-	public double econCostSethome = 0.0;
+	@Deprecated public double econCostSethome = 0.0;
+	public double econCostWarpAdd = 0.0;
+	public double econCostWarpRemove = 0.0;
 	public double econCostJoin = 0.0;
 	public double econCostLeave = 0.0;
 	public double econCostKick = 0.0;
 	public double econCostInvite = 0.0;
 	public double econCostDeinvite = 0.0;
-	public double econCostHome = 0.0;
+	@Deprecated public double econCostHome = 0.0;
+	public double econCostWarpGo = 0.0;
 	public double econCostName = 0.0;
 	public double econCostDescription = 0.0;
 	public double econCostTitle = 0.0;
@@ -681,5 +624,7 @@ public class MConf extends Entity<MConf>
 	// That costs should the faciton bank take care of?
 	// If you set this to false the player executing the command will pay instead.
 	public boolean bankFactionPaysCosts = true;
+
+	public boolean useNewMoneySystem = false;
 
 }

@@ -7,10 +7,7 @@ import com.massivecraft.massivecore.collections.MassiveMap;
 import com.massivecraft.massivecore.collections.WorldExceptionSet;
 import com.massivecraft.massivecore.command.editor.annotation.EditorType;
 import com.massivecraft.massivecore.command.editor.annotation.EditorTypeInner;
-import com.massivecraft.massivecore.command.type.combined.TypeDataBannerPattern;
-import com.massivecraft.massivecore.command.type.combined.TypeDataPotionEffect;
 import com.massivecraft.massivecore.command.type.combined.TypeEntry;
-import com.massivecraft.massivecore.command.type.combined.TypePotionEffectWrap;
 import com.massivecraft.massivecore.command.type.combined.TypeSoundEffect;
 import com.massivecraft.massivecore.command.type.container.TypeBackstringSet;
 import com.massivecraft.massivecore.command.type.container.TypeExceptionSet;
@@ -33,12 +30,12 @@ import com.massivecraft.massivecore.command.type.enumeration.TypeHorseVariant;
 import com.massivecraft.massivecore.command.type.enumeration.TypeLlamaColor;
 import com.massivecraft.massivecore.command.type.enumeration.TypeMaterial;
 import com.massivecraft.massivecore.command.type.enumeration.TypeOcelotType;
-import com.massivecraft.massivecore.command.type.enumeration.TypeParticleEffect;
+import com.massivecraft.massivecore.command.type.enumeration.TypeParrotVariant;
+import com.massivecraft.massivecore.command.type.enumeration.TypeParticle;
 import com.massivecraft.massivecore.command.type.enumeration.TypeRabbitType;
 import com.massivecraft.massivecore.command.type.enumeration.TypeSkeletonType;
 import com.massivecraft.massivecore.command.type.enumeration.TypeSound;
 import com.massivecraft.massivecore.command.type.enumeration.TypeSpawnReason;
-import com.massivecraft.massivecore.command.type.enumeration.TypeParrotVariant;
 import com.massivecraft.massivecore.command.type.enumeration.TypeVillagerProfession;
 import com.massivecraft.massivecore.command.type.enumeration.TypeWorldType;
 import com.massivecraft.massivecore.command.type.primitive.TypeBooleanTrue;
@@ -50,7 +47,6 @@ import com.massivecraft.massivecore.command.type.primitive.TypeLong;
 import com.massivecraft.massivecore.command.type.primitive.TypeString;
 import com.massivecraft.massivecore.command.type.sender.TypePlayer;
 import com.massivecraft.massivecore.command.type.sender.TypeSender;
-import com.massivecraft.massivecore.command.type.store.TypeAspect;
 import com.massivecraft.massivecore.command.type.store.TypeMultiverse;
 import com.massivecraft.massivecore.util.ReflectionUtil;
 
@@ -275,10 +271,7 @@ public class RegistryType
 	// -------------------------------------------- //
 	// DEFAULTS
 	// -------------------------------------------- //
-	// NOTE: As of 2016-05-17 about 15% of all servers are still using 1.7.x.
-	// With this in mind there are some try catch clauses.
-	// We catch NoClassDefFoundError and silently move along on those servers.
-	
+
 	public static void registerAll()
 	{
 		// Primitive
@@ -317,46 +310,12 @@ public class RegistryType
 		register(TypeHorseVariant.get());
 		register(TypeMaterial.get());
 		register(TypeOcelotType.get());
-		register(TypeParticleEffect.get());
+		register(TypeParticle.get());
 		register(TypeSpawnReason.get());
-		
-		// 1.7 Compat
-		try
-		{
-			register(TypeRabbitType.get());
-		}
-		catch (Throwable t)
-		{
-			
-		}
-		
-		try
-		{
-			register(TypeDamageModifier.get());
-		}
-		catch (Throwable t)
-		{
-			
-		}
-		
-		try
-		{
-			register(TypeLlamaColor.get());
-		}
-		catch (Throwable t)
-		{
-			
-		}
-		
-		try
-		{
-			register(TypeParrotVariant.get());
-		}
-		catch (Throwable t)
-		{
-		
-		}
-		
+		register(TypeRabbitType.get());
+		register(TypeDamageModifier.get());
+		register(TypeLlamaColor.get());
+		register(TypeParrotVariant.get());
 		register(TypeSkeletonType.get());
 		register(TypeSound.get());
 		register(TypeVillagerProfession.get());
@@ -366,16 +325,10 @@ public class RegistryType
 		register(TypeDestination.get());
 		register(TypeItemStack.get());
 		
-		register(TypeDataBannerPattern.get());
-		register(TypeDataPotionEffect.get());
-		register(TypeDataFireworkEffect.get());
-		register(TypeDataItemStack.get());
-		
 		register(TypePermission.get());
 		register(TypePotionEffectType.get());
 		register(TypePS.get());
 		register(TypeWorld.get());
-		register(TypePotionEffectWrap.get());
 		register(TypeSoundEffect.get());
 		
 		// Sender
@@ -383,7 +336,6 @@ public class RegistryType
 		register(TypeSender.get());
 		
 		// Store
-		register(TypeAspect.get());
 		register(TypeMultiverse.get());
 		
 		// Collection

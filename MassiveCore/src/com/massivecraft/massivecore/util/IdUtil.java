@@ -1,5 +1,6 @@
 package com.massivecraft.massivecore.util;
 
+import com.google.gson.reflect.TypeToken;
 import com.massivecraft.massivecore.MassiveCore;
 import com.massivecraft.massivecore.SenderPresence;
 import com.massivecraft.massivecore.SenderType;
@@ -10,9 +11,9 @@ import com.massivecraft.massivecore.event.EventMassiveCoreSenderUnregister;
 import com.massivecraft.massivecore.mixin.MixinActual;
 import com.massivecraft.massivecore.mixin.MixinPlayed;
 import com.massivecraft.massivecore.store.SenderEntity;
-import com.massivecraft.massivecore.xlib.gson.reflect.TypeToken;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
@@ -27,7 +28,6 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -181,7 +181,7 @@ public class IdUtil implements Listener, Runnable
 		Set<CommandSender> ret = new MassiveSet<>();
 		
 		// Add Online Players
-		ret.addAll(MUtil.getOnlinePlayers());
+		ret.addAll(Bukkit.getOnlinePlayers());
 		
 		// Add Console
 		ret.add(getConsole());
@@ -264,7 +264,12 @@ public class IdUtil implements Listener, Runnable
 	{
 		update(id, name, System.currentTimeMillis(), presence);
 	}
-	
+
+	public static void update(IdData data)
+	{
+		update(data.getId(), data.getName(), data.getMillis(), null);
+	}
+
 	public static void update(final String id, final String name, final long millis, SenderPresence presence)
 	{
 		// First Null Check
@@ -456,7 +461,7 @@ public class IdUtil implements Listener, Runnable
 	public static IdData getData(Object senderObject)
 	{
 		// Null Return
-		if (senderObject == null) return null;
+		if (senderObject == null) throw new NullPointerException("senderObject");
 		
 		// Already Done
 		if (senderObject instanceof IdData) return (IdData) senderObject;
@@ -480,6 +485,12 @@ public class IdUtil implements Listener, Runnable
 		{
 			String id = getIdFromSender((CommandSender) senderObject);
 			return getIdToData().get(id);
+		}
+
+		// OfflinePlayer (UUID recurse)
+		if (senderObject instanceof OfflinePlayer)
+		{
+			return getData(((OfflinePlayer) senderObject).getUniqueId());
 		}
 		
 		// UUID
@@ -514,7 +525,7 @@ public class IdUtil implements Listener, Runnable
 	public static CommandSender getSender(Object senderObject)
 	{
 		// Null Return
-		if (senderObject == null) return null;
+		if (senderObject == null) throw new NullPointerException("senderObject");
 		
 		// Already Done
 		if (senderObject instanceof CommandSender) return (CommandSender) senderObject;
@@ -537,6 +548,12 @@ public class IdUtil implements Listener, Runnable
 		
 		// CommandSender
 		// Handled at "Already Done"
+
+		// OfflinePlayer
+		if (senderObject instanceof OfflinePlayer)
+		{
+			return getSender(((OfflinePlayer) senderObject).getUniqueId());
+		}
 		
 		// UUID
 		if (senderObject instanceof UUID)
@@ -573,7 +590,7 @@ public class IdUtil implements Listener, Runnable
 	public static UUID getUuid(Object senderObject)
 	{
 		// Null Return
-		if (senderObject == null) return null;
+		if (senderObject == null) throw new NullPointerException("senderObject");
 		
 		// Already Done
 		if (senderObject instanceof UUID) return (UUID)senderObject;
@@ -601,6 +618,9 @@ public class IdUtil implements Listener, Runnable
 			String id = sender.getName();
 			return MUtil.asUuid(id);
 		}
+
+		// OfflinePlayer
+		if (senderObject instanceof OfflinePlayer) return ((OfflinePlayer) senderObject).getUniqueId();
 		
 		// UUID
 		// Handled at "Already Done"
@@ -635,7 +655,7 @@ public class IdUtil implements Listener, Runnable
 	public static String getId(Object senderObject)
 	{
 		// Null Return
-		if (senderObject == null) return null;
+		if (senderObject == null) throw new NullPointerException("senderObject");
 		
 		// Already Done
 		if (senderObject instanceof String && MUtil.isUuid((String)senderObject)) return (String)senderObject;
@@ -658,6 +678,9 @@ public class IdUtil implements Listener, Runnable
 		
 		// Command Sender
 		if (senderObject instanceof CommandSender) return getIdFromSender((CommandSender) senderObject);
+
+		// OfflinePlayer
+		// Handled at "Data"
 		
 		// UUID
 		if (senderObject instanceof UUID) return getIdFromUuid((UUID) senderObject);
@@ -708,7 +731,7 @@ public class IdUtil implements Listener, Runnable
 	public static String getName(Object senderObject)
 	{
 		// Null Return
-		if (senderObject == null) return null;
+		if (senderObject == null) throw new NullPointerException("senderObject");
 		
 		// Already Done
 		// Handled at "Data" (not applicable - names can look differently)
@@ -753,6 +776,21 @@ public class IdUtil implements Listener, Runnable
 		// Return Null
 		return null;
 	}
+
+	public static OfflinePlayer getOfflinePlayer(Object senderObject)
+	{
+		// Null Return
+		if (senderObject == null) throw new NullPointerException("senderObject");
+
+		// Already done
+		if (senderObject instanceof OfflinePlayer) return (OfflinePlayer) senderObject;
+
+		//
+		UUID uuid = getUuid(senderObject);
+		if (uuid == null) return null;
+
+		return Bukkit.getOfflinePlayer(uuid);
+	}
 	
 	public static String getNameFromSender(CommandSender sender)
 	{
@@ -762,6 +800,7 @@ public class IdUtil implements Listener, Runnable
 	
 	public static boolean isOnline(Object senderObject)
 	{
+		if (senderObject == null) throw new NullPointerException("senderObject");
 		// Fix the id ...
 		String id = getId(senderObject);
 		if (id == null) return false;
@@ -927,7 +966,7 @@ public class IdUtil implements Listener, Runnable
 		
 		long millis = System.currentTimeMillis();
 		
-		for (Player player : MUtil.getOnlinePlayers())
+		for (Player player : Bukkit.getOnlinePlayers())
 		{
 			String id = getId(player);
 			if (id == null) throw new NullPointerException("id");

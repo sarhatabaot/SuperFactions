@@ -1,6 +1,6 @@
 package com.massivecraft.massivecore.nms;
 
-import com.massivecraft.massivecore.MassiveCoreMConf;
+import com.massivecraft.massivecore.entity.MassiveCoreMConf;
 import com.massivecraft.massivecore.mixin.Mixin;
 import com.massivecraft.massivecore.mson.Mson;
 import com.massivecraft.massivecore.util.IdUtil;
@@ -61,7 +61,7 @@ public class NmsChat extends Mixin
 	
 	public void sendTitleRaw(Object sendeeObject, int ticksIn, int ticksStay, int ticksOut, String rawMain, String rawSub)
 	{
-		
+
 	}
 	
 	public void sendTitleMson(Object sendeeObject, int ticksIn, int ticksStay, int ticksOut, Mson msonMain, Mson msonSub)

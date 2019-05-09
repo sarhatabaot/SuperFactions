@@ -20,7 +20,7 @@ public class CmdFactionsTitle extends FactionsCommand
 	{
 		// Parameters
 		this.addParameter(TypeMPlayer.get(), "player");
-		this.addParameter(TypeString.get(), "title", "", true);
+		this.addParameter(TypeString.get(), "title", "none", true);
 	}
 
 	// -------------------------------------------- //
@@ -44,10 +44,13 @@ public class CmdFactionsTitle extends FactionsCommand
 		if ( ! MPerm.getPermTitle().has(msender, you.getFaction(), true)) return;
 		
 		// Rank Check
-		if (!msender.isOverriding() && you.getRole().isMoreThan(msender.getRole()))
+		if (!msender.isOverriding() && you.getRank().isMoreThan(msender.getRank()))
 		{
-			msg("<b>You can not edit titles for higher ranks.");
-			return;
+			throw new MassiveException().addMsg("<b>You can not edit titles for higher ranks.");
+		}
+		if (!msender.isOverriding() && you.getRank() == msender.getRank() && msender != you)
+		{
+			throw new MassiveException().addMsg("<b>You can't edit titles of people with the same rank as yourself.");
 		}
 
 		// Event

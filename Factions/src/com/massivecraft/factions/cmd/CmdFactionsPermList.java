@@ -15,19 +15,6 @@ import java.util.List;
 public class CmdFactionsPermList extends FactionsCommand
 {
 	// -------------------------------------------- //
-	// REUSABLE PREDICATE
-	// -------------------------------------------- //
-	
-	private static final Predicate<MPerm> PREDICATE_MPERM_VISIBLE = new Predicate<MPerm>()
-	{
-		@Override
-		public boolean apply(MPerm mperm)
-		{
-			return mperm.isVisible();
-		}
-	};
-	
-	// -------------------------------------------- //
 	// CONSTRUCT
 	// -------------------------------------------- //
 	
@@ -49,31 +36,18 @@ public class CmdFactionsPermList extends FactionsCommand
 		
 		// Pager create
 		String title = String.format("Perms for %s", msenderFaction.describeTo(msender));
-		final Pager<MPerm> pager = new Pager<>(this, title, page, new Stringifier<MPerm>()
-		{
-			@Override
-			public String toString(MPerm mperm, int index)
-			{
-				return mperm.getDesc(true, true);
-			}
-		});
+		final Pager<MPerm> pager = new Pager<>(this, title, page, (Stringifier<MPerm>) (mp, i) -> mp.getDesc(true, true));
+		final Predicate<MPerm> predicate = msender.isOverriding() ? null : MPerm::isVisible;
 		
-		final Predicate<MPerm> predicate = msender.isOverriding() ? null : PREDICATE_MPERM_VISIBLE;
-		
-		Bukkit.getScheduler().runTaskAsynchronously(Factions.get(), new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				// Get items
-				List<MPerm> items = MPermColl.get().getAll(predicate);
-				
-				// Pager items
-				pager.setItems(items);
-				
-				// Pager message
-				pager.message();
-			}
+		Bukkit.getScheduler().runTaskAsynchronously(Factions.get(), () -> {
+			// Get items
+			List<MPerm> items = MPermColl.get().getAll(predicate);
+
+			// Pager items
+			pager.setItems(items);
+
+			// Pager message
+			pager.message();
 		});
 	}
 

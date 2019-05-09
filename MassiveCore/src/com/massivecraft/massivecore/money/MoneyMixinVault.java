@@ -1,13 +1,15 @@
 package com.massivecraft.massivecore.money;
 
+import com.massivecraft.massivecore.util.IdUtil;
 import com.massivecraft.massivecore.util.MUtil;
 import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.util.Collection;
 
-@SuppressWarnings("deprecation")
 public class MoneyMixinVault extends MoneyMixinAbstract
 {
 	// -------------------------------------------- //
@@ -114,7 +116,13 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 	@Override
 	public boolean exists(String accountId)
 	{
-		return this.getEconomy().hasAccount(accountId);
+		Object econObject = getEconomyObject(accountId);
+		OfflinePlayer op = econObject instanceof OfflinePlayer ? (OfflinePlayer) econObject : null;
+		String name = econObject instanceof String ? (String) econObject : null;
+
+		if (op != null) return this.getEconomy().hasAccount(op);
+		if (name != null) return this.getEconomy().hasAccount(name);
+		throw new RuntimeException();
 	}
 	
 	@Override
@@ -131,14 +139,28 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 	public double get(String accountId)
 	{
 		this.ensureExists(accountId);
-		return this.getEconomy().getBalance(accountId);
+
+		Object econObject = getEconomyObject(accountId);
+		OfflinePlayer op = econObject instanceof OfflinePlayer ? (OfflinePlayer) econObject : null;
+		String name = econObject instanceof String ? (String) econObject : null;
+
+		if (op != null) return this.getEconomy().getBalance(op);
+		if (name != null) return this.getEconomy().getBalance(name);
+		throw new RuntimeException();
 	}
 	
 	@Override
 	public boolean has(String accountId, double amount)
 	{
 		this.ensureExists(accountId);
-		return this.getEconomy().has(accountId, amount);
+
+		Object econObject = getEconomyObject(accountId);
+		OfflinePlayer op = econObject instanceof OfflinePlayer ? (OfflinePlayer) econObject : null;
+		String name = econObject instanceof String ? (String) econObject : null;
+
+		if (op != null) return this.getEconomy().has(op, amount);
+		if (name != null) return this.getEconomy().has(name, amount);
+		throw new RuntimeException();
 	}
 	
 	// -------------------------------------------- //
@@ -149,7 +171,7 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 	public boolean move(String fromId, String toId, String byId, double amount, Collection<String> categories, Object message)
 	{
 		Economy economy = this.getEconomy();
-		
+
 		// Ensure positive direction
 		if (amount < 0)
 		{
@@ -158,7 +180,15 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 			fromId = toId;
 			toId = temp;
 		}
-		
+
+		Object objectFrom = getEconomyObject(fromId);
+		OfflinePlayer opFrom = objectFrom instanceof OfflinePlayer ? (OfflinePlayer) objectFrom : null;
+		String nameFrom = objectFrom instanceof String ? (String) objectFrom : null;
+
+		Object objectTo = getEconomyObject(toId);
+		OfflinePlayer opTo = objectTo instanceof OfflinePlayer ? (OfflinePlayer) objectTo : null;
+		String nameTo = objectTo instanceof String ? (String) objectTo : null;
+
 		// Ensure the accounts exist
 		if (fromId != null) this.ensureExists(fromId);
 		if (toId != null) this.ensureExists(toId);
@@ -166,7 +196,8 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 		// Subtract From
 		if (fromId != null)
 		{
-			if (!economy.withdrawPlayer(fromId, amount).transactionSuccess())
+			EconomyResponse response = opFrom != null ? economy.withdrawPlayer(opFrom, amount) : economy.withdrawPlayer(nameFrom, amount);
+			if (!response.transactionSuccess())
 			{
 				return false;
 			}
@@ -175,12 +206,15 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 		// Add To
 		if (toId != null)
 		{
-			if (!economy.depositPlayer(toId, amount).transactionSuccess())
+			EconomyResponse response = opTo != null ? economy.depositPlayer(opTo, amount) : economy.depositPlayer(nameTo, amount);
+			if (!response.transactionSuccess())
 			{
 				if (fromId != null)
 				{
 					// Undo the withdraw
-					economy.depositPlayer(fromId, amount);
+					if (opFrom != null) economy.depositPlayer(opFrom, amount);
+					if (nameFrom != null) economy.depositPlayer(nameFrom, amount);
+					throw new RuntimeException();
 				}
 				return false;
 			}
@@ -196,17 +230,35 @@ public class MoneyMixinVault extends MoneyMixinAbstract
 	public boolean ensureExists(String accountId)
 	{
 		Economy economy = this.getEconomy();
+
+		Object econObject = getEconomyObject(accountId);
+		OfflinePlayer op = econObject instanceof OfflinePlayer ? (OfflinePlayer) econObject : null;
+		String name = econObject instanceof String ? (String) econObject : null;
 		
-		if (economy.hasAccount(accountId)) return true;
+		if (op != null && economy.hasAccount(op)) return true;
+		if (name != null && economy.hasAccount(name)) return true;
 		
-		if (!economy.createPlayerAccount(accountId)) return false;
+		if (op != null && !economy.createPlayerAccount(op)) return false;
+		if (name != null && !economy.createPlayerAccount(name)) return false;
 		
-		if (MUtil.isValidPlayerName(accountId)) return true;
+		if (MUtil.isUuid(accountId)) return true;
+
+		// What is this for???
+		//double balance = economy.getBalance(getOfflinePlayer(accountId));
+		//economy.withdrawPlayer(getOfflinePlayer(accountId), balance);
 		
-		double balance = economy.getBalance(accountId);
-		economy.withdrawPlayer(accountId, balance);
-		
-		return true;
+		return false;
+	}
+
+	public static Object getEconomyObject(String accountId)
+	{
+		if (null == accountId) return null;
+		// Because of Factions we have this crazy-workaround.
+		// Where offlineplayers will be used when possible
+		// but otherwise names will.
+		OfflinePlayer ret = IdUtil.getOfflinePlayer(accountId);
+		if (ret != null) return ret;
+		else return accountId;
 	}
 
 }

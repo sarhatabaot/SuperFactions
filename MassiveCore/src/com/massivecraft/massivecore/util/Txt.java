@@ -1,11 +1,10 @@
 package com.massivecraft.massivecore.util;
 
+import com.massivecraft.massivecore.cmd.CmdMassiveCore;
 import com.massivecraft.massivecore.collections.MassiveList;
 import com.massivecraft.massivecore.command.MassiveCommand;
-import com.massivecraft.massivecore.cmd.CmdMassiveCore;
 import com.massivecraft.massivecore.mson.Mson;
 import com.massivecraft.massivecore.mson.MsonEvent;
-import com.massivecraft.massivecore.predicate.Predicate;
 import com.massivecraft.massivecore.predicate.PredicateStartsWithIgnoreCase;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -170,7 +170,7 @@ public class Txt
 	
 	public static String parse(String string)
 	{
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		StringBuffer ret = new StringBuffer();
 		Matcher matcher = parsePattern.matcher(string);
 		while (matcher.find())
@@ -202,7 +202,7 @@ public class Txt
 	
 	public static ArrayList<String> wrap(final String string)
 	{
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		return new ArrayList<>(Arrays.asList(PATTERN_NEWLINE.split(string)));
 	}
 	
@@ -245,13 +245,13 @@ public class Txt
 	
 	public static String upperCaseFirst(String string)
 	{
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		if (string.length() == 0) return string;
 		return string.substring(0, 1).toUpperCase() + string.substring(1);
 	}
 	public static String lowerCaseFirst(String string)
 	{
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		if (string.length() == 0) return string;
 		return string.substring(0, 1).toLowerCase() + string.substring(1);
 	}
@@ -392,7 +392,8 @@ public class Txt
 	
 	public static boolean isVowel(String str)
 	{
-		if (str == null || str.length() == 0) return false;
+		if (str == null) throw new NullPointerException("str");
+		if (str.length() == 0) return false;
 		return vowel.contains(str.substring(0, 1));
 	}
 	
@@ -419,26 +420,37 @@ public class Txt
 	// -------------------------------------------- //
 	// Material name tools
 	// -------------------------------------------- //
-	
+
 	protected static Pattern PATTERN_ENUM_SPLIT = Pattern.compile("[\\s_]+");
-	public static String getNicedEnumString(String str)
+	public static String getNicedEnumString(String str, String glue)
 	{
 		List<String> parts = new ArrayList<>();
 		for (String part : PATTERN_ENUM_SPLIT.split(str.toLowerCase()))
 		{
 			parts.add(upperCaseFirst(part));
 		}
-		return implode(parts, "");
+		return implode(parts, glue);
 	}
-	
+
+	public static String getNicedEnumString(String str)
+	{
+		return getNicedEnumString(str, "");
+	}
+
+	public static <T extends Enum<T>> String getNicedEnum(T enumObject, String glue)
+	{
+		return getNicedEnumString(enumObject.name(), glue);
+	}
+
+
 	public static <T extends Enum<T>> String getNicedEnum(T enumObject)
 	{
 		return getNicedEnumString(enumObject.name());
 	}
-	
+
 	public static String getMaterialName(Material material)
 	{
-		return getNicedEnum(material);
+		return getNicedEnum(material, " ");
 	}
 	
 	public static String getItemName(ItemStack itemStack)
@@ -771,7 +783,7 @@ public class Txt
 	
 	public static String removeSmartQuotes(String string)
 	{
-		if (string == null) return null;
+		if (string == null) throw new NullPointerException("string");
 		
 		// LEFT SINGLE QUOTATION MARK
 		string = string.replace("\u2018", "'");
@@ -840,7 +852,7 @@ public class Txt
 		// Fill Ret
 		for (T element : elements)
 		{
-			if ( ! predicate.apply(element)) continue;
+			if ( ! predicate.test(element)) continue;
 			ret.add(element);
 		}
 		

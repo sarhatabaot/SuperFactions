@@ -1,16 +1,15 @@
 package com.massivecraft.factions.cmd;
 
-import com.massivecraft.factions.cmd.type.TypeFaction;
-
-public class CmdFactionsPowerBoostFaction extends CmdFactionsPowerBoostAbstract
+public class CmdFactionsPowerboostFaction extends FactionsCommand
 {
 	// -------------------------------------------- //
-	// CONSTRUCT
+	// FIELDS
 	// -------------------------------------------- //
-	
-	public CmdFactionsPowerBoostFaction()
-	{
-		super(TypeFaction.get(), "faction");
-	}
+
+	public CmdFactionsPowerboostFactionShow cmdFactionsPowerBoostFactionShow = new CmdFactionsPowerboostFactionShow();
+	public CmdFactionsPowerboostFactionSet cmdFactionsPowerBoostFactionSet = new CmdFactionsPowerboostFactionSet();
+	public CmdFactionsPowerboostFactionAdd cmdFactionsPowerBoostFactionAdd = new CmdFactionsPowerboostFactionAdd();
+	public CmdFactionsPowerboostFactionTake cmdFactionsPowerBoostFactionTake = new CmdFactionsPowerboostFactionTake();
+	public CmdFactionsPowerboostFactionMultiply cmdFactionsPowerBoostFactionMultiply = new CmdFactionsPowerboostFactionMultiply();
 	
 }
