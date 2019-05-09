@@ -14,11 +14,11 @@ The whole factions project, for build via jitpack.
 <dependency>
     <groupId>com.github.sarhatabaot.SuperFactions</groupId>
     <artifactId>MassiveCore</artifactId>
-    <version>v2.14.1-SNAPSHOT</version>
+    <version>3.2.0</version>
 </dependency>
 <dependency>
     <groupId>com.github.sarhatabaot.SuperFactions</groupId>
     <artifactId>Factions</artifactId>
-    <version>v2.14.1-SNAPSHOT</version>
+    <version>3.2.0</version>
 </dependency>
 ```
