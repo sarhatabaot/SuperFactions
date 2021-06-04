@@ -50,7 +50,7 @@
         <massiveMongoDBVersion>2.12.3</massiveMongoDBVersion>
 
         <massiveJavassistVersion>3.21.0-GA</massiveJavassistVersion>
-        <massiveHttpclientVersion>4.5.3</massiveHttpclientVersion>
+        <massiveHttpclientVersion>4.5.13</massiveHttpclientVersion>
 
         <!-- https://hub.spigotmc.org/nexus/content/groups/public/org/spigotmc/spigot-api/ -->
         <massiveSpigotVersion>1.13.2-R0.1-SNAPSHOT</massiveSpigotVersion>
